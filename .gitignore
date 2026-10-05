@@ -1,0 +1,23 @@
+# Build
+/build/
+cmake-build-*/
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+Testing/
+_deps/
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Logs
+*.log
+
+# FAT32 disk images
+*.img
+*.raw
