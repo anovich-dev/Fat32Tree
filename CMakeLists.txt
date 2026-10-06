@@ -10,13 +10,22 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+add_library(fat32tree-core
+    src/BinaryReader.cpp
+)
+
+target_include_directories(fat32tree-core
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
+
 add_executable(fat32tree
     src/main.cpp
 )
 
-target_include_directories(fat32tree
+target_link_libraries(fat32tree
     PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
+        fat32tree-core
 )
 
 enable_testing()
