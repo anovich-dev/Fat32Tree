@@ -68,7 +68,7 @@ ReadResult<std::uint8_t> BinaryReader::readU8(std::uint64_t offset)
         std::to_integer<std::uint8_t>(byte)};
 }
 
-ReadResult<std::uint16_t> BinaryReader::read16LE(std::uint64_t offset)
+ReadResult<std::uint16_t> BinaryReader::readU16LE(std::uint64_t offset)
 {
     std::array<std::byte, 2> bytes{};
 
@@ -89,7 +89,7 @@ ReadResult<std::uint16_t> BinaryReader::read16LE(std::uint64_t offset)
         value};
 }
 
-ReadResult<std::uint32_t> BinaryReader::read32LE(std::uint64_t offset)
+ReadResult<std::uint32_t> BinaryReader::readU32LE(std::uint64_t offset)
 {
     std::array<std::byte, 4> bytes{};
 

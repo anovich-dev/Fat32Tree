@@ -137,7 +137,7 @@ TEST_F(BinaryReaderTest, ReadsU16AsLittleEndian)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    const auto result = reader.read16LE(2);
+    const auto result = reader.readU16LE(2);
 
     EXPECT_EQ(result.status, fat32tree::ReadStatus::Success);
     EXPECT_EQ(result.value, 0x1234);
@@ -147,7 +147,7 @@ TEST_F(BinaryReaderTest, ReadsU32AsLittleEndian)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    const auto result = reader.read32LE(4);
+    const auto result = reader.readU32LE(4);
 
     EXPECT_EQ(result.status, fat32tree::ReadStatus::Success);
     EXPECT_EQ(result.value, 0x12345678);
@@ -190,7 +190,7 @@ TEST_F(BinaryReaderTest, ReadU16AtLastValidOffsetSucceeds)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    const auto result = reader.read16LE(kBytes.size() - 2);
+    const auto result = reader.readU16LE(kBytes.size() - 2);
 
     EXPECT_EQ(result.status, fat32tree::ReadStatus::Success);
     EXPECT_EQ(result.value, 0xFFAB);
@@ -200,21 +200,21 @@ TEST_F(BinaryReaderTest, ReadU16StartingOneByteBeforeEndReturnsOutOfBounds)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    EXPECT_EQ(reader.read16LE(kBytes.size() - 1).status, fat32tree::ReadStatus::OutOfBounds);
+    EXPECT_EQ(reader.readU16LE(kBytes.size() - 1).status, fat32tree::ReadStatus::OutOfBounds);
 }
 
 TEST_F(BinaryReaderTest, ReadU16StartingAtFileSizeReturnsOutOfBounds)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    EXPECT_EQ(reader.read16LE(kBytes.size()).status, fat32tree::ReadStatus::OutOfBounds);
+    EXPECT_EQ(reader.readU16LE(kBytes.size()).status, fat32tree::ReadStatus::OutOfBounds);
 }
 
 TEST_F(BinaryReaderTest, ReadU32AtLastValidOffsetSucceeds)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    const auto result = reader.read32LE(kBytes.size() - 4);
+    const auto result = reader.readU32LE(kBytes.size() - 4);
 
     EXPECT_EQ(result.status, fat32tree::ReadStatus::Success);
     EXPECT_EQ(result.value, 0xFFAB1234);
@@ -224,14 +224,14 @@ TEST_F(BinaryReaderTest, ReadU32StartingThreeBytesBeforeEndReturnsOutOfBounds)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    EXPECT_EQ(reader.read32LE(kBytes.size() - 3).status, fat32tree::ReadStatus::OutOfBounds);
+    EXPECT_EQ(reader.readU32LE(kBytes.size() - 3).status, fat32tree::ReadStatus::OutOfBounds);
 }
 
 TEST_F(BinaryReaderTest, ReadU32StartingAtFileSizeReturnsOutOfBounds)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    EXPECT_EQ(reader.read32LE(kBytes.size()).status, fat32tree::ReadStatus::OutOfBounds);
+    EXPECT_EQ(reader.readU32LE(kBytes.size()).status, fat32tree::ReadStatus::OutOfBounds);
 }
 
 TEST_F(BinaryReaderTest, ReadsFromEmptyFileReturnOutOfBounds)
@@ -246,8 +246,8 @@ TEST_F(BinaryReaderTest, ReadsFromEmptyFileReturnOutOfBounds)
 
     EXPECT_EQ(reader.size(), 0U);
     EXPECT_EQ(reader.readU8(0).status, fat32tree::ReadStatus::OutOfBounds);
-    EXPECT_EQ(reader.read16LE(0).status, fat32tree::ReadStatus::OutOfBounds);
-    EXPECT_EQ(reader.read32LE(0).status, fat32tree::ReadStatus::OutOfBounds);
+    EXPECT_EQ(reader.readU16LE(0).status, fat32tree::ReadStatus::OutOfBounds);
+    EXPECT_EQ(reader.readU32LE(0).status, fat32tree::ReadStatus::OutOfBounds);
 }
 
 TEST_F(BinaryReaderTest, MissingFileThrowsBinaryReaderException)
@@ -264,8 +264,8 @@ TEST_F(BinaryReaderTest, ReadsUseIndependentAbsoluteOffsets)
     fat32tree::BinaryReader reader(m_filePath);
 
     const auto first = reader.readU8(0);
-    const auto word = reader.read32LE(4);
-    const auto halfWord = reader.read16LE(2);
+    const auto word = reader.readU32LE(4);
+    const auto halfWord = reader.readU16LE(2);
     const auto final = reader.readU8(7);
 
     EXPECT_EQ(first.status, fat32tree::ReadStatus::Success);
@@ -283,8 +283,8 @@ TEST_F(BinaryReaderTest, ValidReadSucceedsAfterOutOfBoundsRead)
     fat32tree::BinaryReader reader(m_filePath);
 
     const auto first = reader.readU8(0);
-    const auto invalid = reader.read32LE(kBytes.size() - 3);
-    const auto second = reader.read16LE(2);
+    const auto invalid = reader.readU32LE(kBytes.size() - 3);
+    const auto second = reader.readU16LE(2);
 
     EXPECT_EQ(first.status, fat32tree::ReadStatus::Success);
     EXPECT_EQ(first.value, 0x01);

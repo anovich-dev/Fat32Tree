@@ -29,8 +29,8 @@ public:
 
     std::uint64_t size() const noexcept;
     ReadResult<std::uint8_t> readU8(std::uint64_t offset);
-    ReadResult<std::uint16_t> read16LE(std::uint64_t offset);
-    ReadResult<std::uint32_t> read32LE(std::uint64_t offset);
+    ReadResult<std::uint16_t> readU16LE(std::uint64_t offset);
+    ReadResult<std::uint32_t> readU32LE(std::uint64_t offset);
 
 private:
     ReadStatus readExact(

@@ -1,6 +1,9 @@
 add_executable(fat32tree-tests
     SmokeTest.cpp
     BinaryReaderTest.cpp
+    BootSectorParserTest.cpp
+    Fat32VolumeValidatorTest.cpp
+    Fat32InitializationTest.cpp
 )
 
 target_link_libraries(fat32tree-tests
