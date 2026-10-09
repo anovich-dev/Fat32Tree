@@ -79,5 +79,20 @@ namespace fat32tree::fat32
     // FAT32 extended flags constants
     inline constexpr std::uint16_t kFatMirroringDisabledMask = 0x0080;
     inline constexpr std::uint16_t kActiveFatIndexMask = 0x000F;
-    
+
+    // FAT32 entry constants
+    inline constexpr std::uint32_t kFatEntrySize = 4;
+    inline constexpr std::uint32_t kFatEntryValueMask = 0x0FFFFFFF;
+
+    inline constexpr std::uint32_t kFreeClusterValue = 0x00000000;
+    inline constexpr std::uint32_t kReservedClusterValue = 0x00000001;
+
+    inline constexpr std::uint32_t kBadClusterValue = 0x0FFFFFF7;
+
+    inline constexpr std::uint32_t kEndOfChainMin = 0x0FFFFFF8;
+    inline constexpr std::uint32_t kEndOfChainMax = 0x0FFFFFFF;
+
+    inline constexpr std::uint32_t kReservedClusterMin = 0x0FFFFFF0;
+    inline constexpr std::uint32_t kReservedClusterMax = 0x0FFFFFF6;
+
 } // namespace fat32tree::fat32

@@ -14,6 +14,9 @@ add_library(fat32tree-core
     src/BinaryReader.cpp
     src/BootSectorParser.cpp
     src/Fat32VolumeValidator.cpp
+    src/FatEntryParser.cpp
+    src/FatTableReader.cpp
+    src/ClusterChainReader.cpp
 )
 
 target_include_directories(fat32tree-core
