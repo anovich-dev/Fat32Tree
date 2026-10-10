@@ -32,6 +32,8 @@ public:
     ReadResult<std::uint16_t> readU16LE(std::uint64_t offset);
     ReadResult<std::uint32_t> readU32LE(std::uint64_t offset);
 
+    ReadStatus readBytes(std::uint64_t offset, std::span<std::uint8_t> buffer);
+
 private:
     ReadStatus readExact(
         std::uint64_t offset,

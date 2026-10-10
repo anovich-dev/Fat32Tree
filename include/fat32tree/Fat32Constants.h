@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace fat32tree::fat32
@@ -94,5 +95,41 @@ namespace fat32tree::fat32
 
     inline constexpr std::uint32_t kReservedClusterMin = 0x0FFFFFF0;
     inline constexpr std::uint32_t kReservedClusterMax = 0x0FFFFFF6;
+
+    // FAT directory entry layout
+    inline constexpr std::uint64_t kDirectoryEntrySize = 32;
+
+    inline constexpr std::uint64_t kDirectoryNameOffset = 0;
+    inline constexpr std::uint64_t kDirectoryAttributeOffset = 11;
+    inline constexpr std::uint64_t kDirectoryFirstClusterHighOffset = 20;
+    inline constexpr std::uint64_t kDirectoryFirstClusterLowOffset = 26;
+    inline constexpr std::uint64_t kDirectoryFileSizeOffset = 28;
+
+    inline constexpr std::size_t kShortNameBaseLength = 8;
+    inline constexpr std::size_t kShortNameExtensionLength = 3;
+    inline constexpr std::size_t kShortNameLength =
+        kShortNameBaseLength + kShortNameExtensionLength;
+
+    // FAT directory entry attribute flags
+    inline constexpr std::uint8_t kAttributeReadOnly  = 0x01;
+    inline constexpr std::uint8_t kAttributeHidden    = 0x02;
+    inline constexpr std::uint8_t kAttributeSystem    = 0x04;
+    inline constexpr std::uint8_t kAttributeVolumeId  = 0x08;
+    inline constexpr std::uint8_t kAttributeDirectory = 0x10;
+    inline constexpr std::uint8_t kAttributeArchive   = 0x20;
+
+    inline constexpr std::uint8_t kAttributeLongName =
+    kAttributeReadOnly |
+    kAttributeHidden |
+    kAttributeSystem |
+    kAttributeVolumeId;
+
+    // FAT directory entry special first-byte markers
+    inline constexpr std::uint8_t kDirectoryEntryEndMarker = 0x00;
+    /* FAT special first-byte marker used for Japanese Kanji filenames:
+     0x05 on disk represents a logical first filename byte of 0xE5,
+     because 0xE5 itself is reserved as the deleted-entry marker */
+    inline constexpr std::uint8_t kDirectoryEntryKanjiMarker = 0x05;
+    inline constexpr std::uint8_t kDirectoryEntryDeletedMarker = 0xE5;
 
 } // namespace fat32tree::fat32

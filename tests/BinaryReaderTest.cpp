@@ -9,8 +9,10 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <span>
 #include <string>
 #include <system_error>
+#include <vector>
 
 namespace
 {
@@ -151,6 +153,49 @@ TEST_F(BinaryReaderTest, ReadsU32AsLittleEndian)
 
     EXPECT_EQ(result.status, fat32tree::ReadStatus::Success);
     EXPECT_EQ(result.value, 0x12345678);
+}
+
+TEST_F(BinaryReaderTest, ReadsMultipleKnownBytes)
+{
+    fat32tree::BinaryReader reader(m_filePath);
+    std::vector<std::uint8_t> bytes(4);
+
+    const auto status = reader.readBytes(0, std::span<std::uint8_t>(bytes));
+
+    EXPECT_EQ(status, fat32tree::ReadStatus::Success);
+    EXPECT_EQ(bytes, (std::vector<std::uint8_t>{0x01, 0x02, 0x34, 0x12}));
+}
+
+TEST_F(BinaryReaderTest, ReadsMultipleBytesFromNonzeroOffset)
+{
+    fat32tree::BinaryReader reader(m_filePath);
+    std::vector<std::uint8_t> bytes(3);
+
+    const auto status = reader.readBytes(2, std::span<std::uint8_t>(bytes));
+
+    EXPECT_EQ(status, fat32tree::ReadStatus::Success);
+    EXPECT_EQ(bytes, (std::vector<std::uint8_t>{0x34, 0x12, 0x78}));
+}
+
+TEST_F(BinaryReaderTest, ReadBytesPastFileEndReturnsOutOfBounds)
+{
+    fat32tree::BinaryReader reader(m_filePath);
+    std::vector<std::uint8_t> bytes(3);
+
+    const auto status = reader.readBytes(kBytes.size() - 2, std::span<std::uint8_t>(bytes));
+
+    EXPECT_EQ(status, fat32tree::ReadStatus::OutOfBounds);
+}
+
+TEST_F(BinaryReaderTest, EmptyReadBytesAtValidOffsetSucceeds)
+{
+    fat32tree::BinaryReader reader(m_filePath);
+    std::vector<std::uint8_t> bytes;
+
+    const auto status = reader.readBytes(kBytes.size(), std::span<std::uint8_t>(bytes));
+
+    EXPECT_EQ(status, fat32tree::ReadStatus::Success);
+    EXPECT_TRUE(bytes.empty());
 }
 
 TEST_F(BinaryReaderTest, ReadU8AtLastValidOffsetSucceeds)

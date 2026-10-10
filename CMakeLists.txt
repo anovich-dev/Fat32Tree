@@ -17,6 +17,8 @@ add_library(fat32tree-core
     src/FatEntryParser.cpp
     src/FatTableReader.cpp
     src/ClusterChainReader.cpp
+    src/DirectoryEntryParser.cpp
+    src/DirectoryEntryValidator.cpp
 )
 
 target_include_directories(fat32tree-core

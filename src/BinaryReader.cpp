@@ -4,6 +4,7 @@
 #include <ios>
 #include <limits>
 #include <array>
+#include <span>
 
 namespace fat32tree
 {
@@ -108,6 +109,13 @@ ReadResult<std::uint32_t> BinaryReader::readU32LE(std::uint64_t offset)
     return {
         ReadStatus::Success,
         value};
+}
+
+ReadStatus BinaryReader::readBytes(std::uint64_t offset, std::span<std::uint8_t> buffer)
+{
+    return readExact(
+        offset,
+        std::as_writable_bytes(buffer));
 }
 
 ReadStatus BinaryReader::readExact(std::uint64_t offset, std::span<std::byte> buffer)

@@ -3,6 +3,8 @@ add_executable(fat32tree-tests
     BinaryReaderTest.cpp
     BootSectorParserTest.cpp
     Fat32VolumeValidatorTest.cpp
+    DirectoryEntryValidatorTest.cpp
+    DirectoryEntryParserTest.cpp
     integrationTests/Fat32InitializationTest.cpp
         integrationTests/Fat32ClusterChainIntegrationTest.cpp
     FatEntryParserTest.cpp
@@ -14,6 +16,7 @@ target_link_libraries(fat32tree-tests
     PRIVATE
         fat32tree-core
         GTest::gtest_main
+        GTest::gmock
 )
 
 include(GoogleTest)
