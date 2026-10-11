@@ -1,0 +1,33 @@
+name: Windows Release Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build Release
+        run: cmake --build build --config Release
+
+      - name: Run tests
+        run: ctest --test-dir build -C Release --output-on-failure
+
+      - name: Prepare package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path package
+          Copy-Item build/Release/fat32tree.exe package/
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fat32Tree-Windows-Release
+          path: package/
