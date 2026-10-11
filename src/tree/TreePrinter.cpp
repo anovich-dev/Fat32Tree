@@ -37,7 +37,7 @@ void TreePrinter::print(const FileNode& root, std::ostream& output) const
         const FileNode& node = *workItem.node;
 
         output << workItem.prefix
-               << (workItem.isLast ? "└── " : "├── ")
+               << (workItem.isLast ? "`-- " : "|-- ")
                << node.name;
 
         if (node.type == DirectoryEntryType::Directory)
@@ -49,7 +49,7 @@ void TreePrinter::print(const FileNode& root, std::ostream& output) const
 
         const std::string childPrefix =
             workItem.prefix +
-            (workItem.isLast ? "    " : "│   ");
+            (workItem.isLast ? "    " : "|   ");
 
         pushChildren(node, childPrefix, workItems);
     }

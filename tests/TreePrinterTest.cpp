@@ -69,7 +69,7 @@ TEST(TreePrinterTest, PrintsSingleFile)
     printer.print(root, output);
 
     EXPECT_EQ(output.str(), "/\n"
-                            "└── FILE.TXT\n");
+                            "`-- FILE.TXT\n");
 }
 
 TEST(TreePrinterTest, PrintsSingleDirectory)
@@ -82,7 +82,7 @@ TEST(TreePrinterTest, PrintsSingleDirectory)
     printer.print(root, output);
 
     EXPECT_EQ(output.str(), "/\n"
-                            "└── DOCS/\n");
+                            "`-- DOCS/\n");
 }
 
 TEST(TreePrinterTest, PrintsMultipleRootChildren)
@@ -97,9 +97,9 @@ TEST(TreePrinterTest, PrintsMultipleRootChildren)
     printer.print(root, output);
 
     EXPECT_EQ(output.str(), "/\n"
-                            "├── A.TXT\n"
-                            "├── B.TXT\n"
-                            "└── DIR/\n");
+                            "|-- A.TXT\n"
+                            "|-- B.TXT\n"
+                            "`-- DIR/\n");
 }
 
 TEST(TreePrinterTest, PrintsNestedDirectory)
@@ -113,8 +113,8 @@ TEST(TreePrinterTest, PrintsNestedDirectory)
     printer.print(root, output);
 
     EXPECT_EQ(output.str(), "/\n"
-                            "└── DIR/\n"
-                            "    └── FILE.TXT\n");
+                            "`-- DIR/\n"
+                            "    `-- FILE.TXT\n");
 }
 
 TEST(TreePrinterTest, PrintsMultipleLevelsWithCorrectPrefixes)
@@ -132,12 +132,12 @@ TEST(TreePrinterTest, PrintsMultipleLevelsWithCorrectPrefixes)
     printer.print(root, output);
 
     EXPECT_EQ(output.str(), "MY_USB/\n"
-                            "├── README.TXT\n"
-                            "├── PHOTOS/\n"
-                            "│   ├── A.JPG\n"
-                            "│   └── TRIP/\n"
-                            "│       └── B.JPG\n"
-                            "└── EMPTYDIR/\n");
+                            "|-- README.TXT\n"
+                            "|-- PHOTOS/\n"
+                            "|   |-- A.JPG\n"
+                            "|   `-- TRIP/\n"
+                            "|       `-- B.JPG\n"
+                            "`-- EMPTYDIR/\n");
 }
 
 TEST(TreePrinterTest, PreservesChildrenOrder)
@@ -152,9 +152,9 @@ TEST(TreePrinterTest, PreservesChildrenOrder)
     printer.print(root, output);
 
     EXPECT_EQ(output.str(), "/\n"
-                            "├── FIRST.TXT\n"
-                            "├── SECOND.TXT\n"
-                            "└── THIRD.TXT\n");
+                            "|-- FIRST.TXT\n"
+                            "|-- SECOND.TXT\n"
+                            "`-- THIRD.TXT\n");
 }
 
 TEST(TreePrinterTest, PrintsEmptyDirectory)
@@ -168,7 +168,7 @@ TEST(TreePrinterTest, PrintsEmptyDirectory)
     printer.print(root, output);
 
     EXPECT_EQ(output.str(), "/\n"
-                            "└── EMPTY/\n");
+                            "`-- EMPTY/\n");
 }
 
 TEST(TreePrinterTest, PrintsSiblingDirectoriesWithDifferentDepths)
@@ -185,11 +185,11 @@ TEST(TreePrinterTest, PrintsSiblingDirectoriesWithDifferentDepths)
     printer.print(root, output);
 
     EXPECT_EQ(output.str(), "/\n"
-                            "├── A/\n"
-                            "│   └── A1/\n"
-                            "│       └── FILE.TXT\n"
-                            "└── B/\n"
-                            "    └── B.TXT\n");
+                            "|-- A/\n"
+                            "|   `-- A1/\n"
+                            "|       `-- FILE.TXT\n"
+                            "`-- B/\n"
+                            "    `-- B.TXT\n");
 }
 
 } // namespace
