@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fat32tree/IClusterChainReader.h"
+#include "fat32tree/fat/IClusterChainReader.h"
 
 #include <gmock/gmock.h>
 

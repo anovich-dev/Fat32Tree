@@ -1,5 +1,5 @@
-#include "fat32tree/FileNode.h"
-#include "fat32tree/TreePrinter.h"
+#include "fat32tree/tree/FileNode.h"
+#include "fat32tree/tree/TreePrinter.h"
 
 #include <memory>
 #include <sstream>

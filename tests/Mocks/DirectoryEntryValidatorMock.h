@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fat32tree/IDirectoryEntryValidator.h"
+#include "fat32tree/directory/IDirectoryEntryValidator.h"
 
 #include <gmock/gmock.h>
 

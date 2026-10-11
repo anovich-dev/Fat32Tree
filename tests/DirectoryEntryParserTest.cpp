@@ -1,8 +1,8 @@
 #include "Mocks/DirectoryEntryValidatorMock.h"
-#include "fat32tree/BinaryReader.h"
-#include "fat32tree/DirectoryEntryParser.h"
-#include "fat32tree/Fat32Constants.h"
-#include "fat32tree/IDirectoryEntryValidator.h"
+#include "fat32tree/core/BinaryReader.h"
+#include "fat32tree/core/Fat32Constants.h"
+#include "fat32tree/directory/DirectoryEntryParser.h"
+#include "fat32tree/directory/IDirectoryEntryValidator.h"
 
 #include <array>
 #include <atomic>

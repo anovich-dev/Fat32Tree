@@ -1,4 +1,4 @@
-#include "fat32tree/FatEntryParser.h"
+#include "fat32tree/fat/FatEntryParser.h"
 
 #include <gtest/gtest.h>
 

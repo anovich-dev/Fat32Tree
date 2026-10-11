@@ -11,18 +11,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 add_library(fat32tree-core
-    src/BinaryReader.cpp
-    src/BootSectorParser.cpp
-    src/Fat32VolumeValidator.cpp
-    src/FatEntryParser.cpp
-    src/FatTableReader.cpp
-    src/ClusterChainReader.cpp
-    src/DirectoryEntryParser.cpp
-    src/DirectoryEntryValidator.cpp
-    src/DirectoryReader.cpp
-    src/FileTreeBuilder.cpp
-    src/TreePrinter.cpp
-    src/Logger.cpp
+    src/core/BinaryReader.cpp
+    src/boot/BootSectorParser.cpp
+    src/boot/Fat32VolumeValidator.cpp
+    src/fat/FatEntryParser.cpp
+    src/fat/FatTableReader.cpp
+    src/fat/ClusterChainReader.cpp
+    src/directory/DirectoryEntryParser.cpp
+    src/directory/DirectoryEntryValidator.cpp
+    src/directory/DirectoryReader.cpp
+    src/tree/FileTreeBuilder.cpp
+    src/tree/TreePrinter.cpp
+    src/core/Logger.cpp
 )
 
 target_include_directories(fat32tree-core

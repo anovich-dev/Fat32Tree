@@ -1,5 +1,5 @@
-#include "fat32tree/Fat32Constants.h"
-#include "fat32tree/Fat32VolumeValidator.h"
+#include "fat32tree/boot/Fat32VolumeValidator.h"
+#include "fat32tree/core/Fat32Constants.h"
 
 #include <array>
 #include <cstdint>

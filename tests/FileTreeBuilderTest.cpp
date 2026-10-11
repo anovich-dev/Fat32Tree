@@ -1,9 +1,9 @@
 #include "Mocks/DirectoryReaderMock.h"
-#include "fat32tree/DirectoryReadResult.h"
-#include "fat32tree/Fat32VolumeLayout.h"
-#include "fat32tree/FileNode.h"
-#include "fat32tree/FileTreeBuilder.h"
-#include "fat32tree/IDirectoryReader.h"
+#include "fat32tree/boot/Fat32VolumeLayout.h"
+#include "fat32tree/directory/DirectoryReadResult.h"
+#include "fat32tree/directory/IDirectoryReader.h"
+#include "fat32tree/tree/FileNode.h"
+#include "fat32tree/tree/FileTreeBuilder.h"
 
 #include <cstdint>
 #include <memory>

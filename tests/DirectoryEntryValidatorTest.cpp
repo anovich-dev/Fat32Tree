@@ -1,5 +1,5 @@
-#include "fat32tree/DirectoryEntryValidator.h"
-#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/core/Fat32Constants.h"
+#include "fat32tree/directory/DirectoryEntryValidator.h"
 
 #include <algorithm>
 #include <array>

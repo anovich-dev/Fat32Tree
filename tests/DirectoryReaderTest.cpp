@@ -1,11 +1,11 @@
 #include "Mocks/ClusterChainReaderMock.h"
 #include "Mocks/DirectoryEntryParserMock.h"
-#include "fat32tree/DirectoryReadResult.h"
-#include "fat32tree/DirectoryReader.h"
-#include "fat32tree/Fat32Constants.h"
-#include "fat32tree/Fat32VolumeLayout.h"
-#include "fat32tree/IClusterChainReader.h"
-#include "fat32tree/IDirectoryEntryParser.h"
+#include "fat32tree/boot/Fat32VolumeLayout.h"
+#include "fat32tree/core/Fat32Constants.h"
+#include "fat32tree/directory/DirectoryReadResult.h"
+#include "fat32tree/directory/DirectoryReader.h"
+#include "fat32tree/directory/IDirectoryEntryParser.h"
+#include "fat32tree/fat/IClusterChainReader.h"
 
 #include <cstdint>
 #include <memory>

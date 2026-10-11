@@ -1,6 +1,6 @@
-#include "fat32tree/BinaryReader.h"
-#include "fat32tree/BootSectorParser.h"
-#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/boot/BootSectorParser.h"
+#include "fat32tree/core/BinaryReader.h"
+#include "fat32tree/core/Fat32Constants.h"
 
 #include <atomic>
 #include <chrono>

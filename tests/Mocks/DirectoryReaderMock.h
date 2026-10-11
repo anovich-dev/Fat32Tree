@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fat32tree/IDirectoryReader.h"
+#include "fat32tree/directory/IDirectoryReader.h"
 
 #include <gmock/gmock.h>
 

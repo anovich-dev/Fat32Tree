@@ -1,6 +1,6 @@
-#include "fat32tree/BinaryReader.h"
-#include "fat32tree/Fat32VolumeLayout.h"
-#include "fat32tree/FatTableReader.h"
+#include "fat32tree/boot/Fat32VolumeLayout.h"
+#include "fat32tree/core/BinaryReader.h"
+#include "fat32tree/fat/FatTableReader.h"
 
 #include <atomic>
 #include <chrono>

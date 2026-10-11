@@ -1,13 +1,13 @@
-#include "fat32tree/BinaryReader.h"
-#include "fat32tree/ClusterChainReader.h"
-#include "fat32tree/DirectoryEntryParser.h"
-#include "fat32tree/DirectoryEntryValidator.h"
-#include "fat32tree/DirectoryReader.h"
-#include "fat32tree/Fat32Constants.h"
-#include "fat32tree/Fat32VolumeLayout.h"
-#include "fat32tree/FatTableReader.h"
-#include "fat32tree/FileNode.h"
-#include "fat32tree/FileTreeBuilder.h"
+#include "fat32tree/boot/Fat32VolumeLayout.h"
+#include "fat32tree/core/BinaryReader.h"
+#include "fat32tree/core/Fat32Constants.h"
+#include "fat32tree/directory/DirectoryEntryParser.h"
+#include "fat32tree/directory/DirectoryEntryValidator.h"
+#include "fat32tree/directory/DirectoryReader.h"
+#include "fat32tree/fat/ClusterChainReader.h"
+#include "fat32tree/fat/FatTableReader.h"
+#include "fat32tree/tree/FileNode.h"
+#include "fat32tree/tree/FileTreeBuilder.h"
 
 #include <atomic>
 #include <chrono>
