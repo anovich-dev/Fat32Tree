@@ -5,8 +5,11 @@ add_executable(fat32tree-tests
     Fat32VolumeValidatorTest.cpp
     DirectoryEntryValidatorTest.cpp
     DirectoryEntryParserTest.cpp
+    DirectoryReaderTest.cpp
+    FileTreeBuilderTest.cpp
     integrationTests/Fat32InitializationTest.cpp
         integrationTests/Fat32ClusterChainIntegrationTest.cpp
+    integrationTests/FileTreeBuilderIntegrationTest.cpp
     FatEntryParserTest.cpp
     FatTableReaderTest.cpp
     ClusterChainReaderTest.cpp

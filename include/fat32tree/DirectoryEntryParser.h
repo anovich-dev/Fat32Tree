@@ -1,5 +1,7 @@
 #pragma once
 
+#include "IDirectoryEntryParser.h"
+
 #include "DirectoryEntry.h"
 #include "BinaryReader.h"
 #include "Fat32Constants.h"
@@ -12,12 +14,12 @@ namespace fat32tree
 
 class IDirectoryEntryValidator;
 
-class DirectoryEntryParser
+class DirectoryEntryParser final : public IDirectoryEntryParser
 {
 public:
     DirectoryEntryParser(BinaryReader& reader, std::unique_ptr<IDirectoryEntryValidator> validator);
 
-    ParsedDirectoryEntry parse(std::uint64_t entryOffset) const;
+    ParsedDirectoryEntry parse(std::uint64_t entryOffset) const override;
 
 private:
     

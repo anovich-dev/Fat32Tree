@@ -13,7 +13,7 @@ namespace fat32tree
 class DirectoryEntryValidator final : public IDirectoryEntryValidator
 {
 public:
-    bool isValidShortName(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const;
+    bool isValidShortName(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const override;
 
 private:
     bool isDotEntry(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const;
