@@ -21,6 +21,7 @@ add_library(fat32tree-core
     src/DirectoryEntryValidator.cpp
     src/DirectoryReader.cpp
     src/FileTreeBuilder.cpp
+    src/TreePrinter.cpp
 )
 
 target_include_directories(fat32tree-core

@@ -7,6 +7,7 @@ add_executable(fat32tree-tests
     DirectoryEntryParserTest.cpp
     DirectoryReaderTest.cpp
     FileTreeBuilderTest.cpp
+    TreePrinterTest.cpp
     integrationTests/Fat32InitializationTest.cpp
         integrationTests/Fat32ClusterChainIntegrationTest.cpp
     integrationTests/FileTreeBuilderIntegrationTest.cpp
