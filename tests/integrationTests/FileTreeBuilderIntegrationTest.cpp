@@ -268,4 +268,85 @@ TEST_F(FileTreeBuilderIntegrationTest, BuildsPartialTreeWhenDirectoryChainIsCorr
     expectNode(*broken.children[1], "FILE2.TXT", DirectoryEntryType::File, 8, 222, 0);
 }
 
+TEST_F(FileTreeBuilderIntegrationTest, BuildsPartialTreeWhenDirectoryChainContainsCycle)
+{
+    writeFatEntry(2, fat::kEndOfChainMax);
+    writeFatEntry(20, 21);
+    writeFatEntry(21, 40);
+    writeFatEntry(40, 21);
+    writeFatEntry(7, fat::kEndOfChainMax);
+    writeFatEntry(8, fat::kEndOfChainMax);
+    writeFatEntry(9, fat::kEndOfChainMax);
+
+    writeEntry(2, 0, "MY_USB     ", fat::kAttributeVolumeId);
+    writeEntry(2, 1, "CYCLIC     ", fat::kAttributeDirectory, 20);
+
+    // Leave no End marker in the directory chain: scanning must terminate
+    // because the FAT cycle was detected, rather than because of a free slot.
+    fillWithDeletedEntries(20);
+    fillWithDeletedEntries(21);
+    fillWithDeletedEntries(40);
+    writeDotEntries(20, 2);
+    writeEntry(20, 2, "FILE1   TXT", fat::kAttributeArchive, 7, 111);
+    writeEntry(21, 0, "FILE2   TXT", fat::kAttributeArchive, 8, 222);
+    writeEntry(40, 0, "FILE3   TXT", fat::kAttributeArchive, 9, 333);
+    ASSERT_NO_FATAL_FAILURE(saveImage());
+
+    fat32tree::BinaryReader reader(m_imagePath);
+    fat32tree::FatTableReader fatTableReader(reader, m_layout);
+    const fat32tree::ClusterChainReader chainReader(fatTableReader, m_layout);
+    const auto chain = chainReader.getClusterChain(20);
+
+    EXPECT_EQ(chain.status, fat32tree::ClusterChainStatus::CycleDetected);
+    EXPECT_EQ(chain.clusters, (std::vector<std::uint32_t>{20, 21, 40}));
+
+    fat32tree::FileTreeBuilder builder(m_layout, makeDirectoryReader(reader, fatTableReader));
+    const auto root = builder.buildTree();
+
+    expectNode(root, "MY_USB", DirectoryEntryType::Directory, 2, 0, 1);
+    ASSERT_EQ(root.children.size(), 1U);
+    const auto& cyclic = *root.children[0];
+    expectNode(cyclic, "CYCLIC", DirectoryEntryType::Directory, 20, 0, 3);
+    ASSERT_EQ(cyclic.children.size(), 3U);
+    expectNode(*cyclic.children[0], "FILE1.TXT", DirectoryEntryType::File, 7, 111, 0);
+    expectNode(*cyclic.children[1], "FILE2.TXT", DirectoryEntryType::File, 8, 222, 0);
+    expectNode(*cyclic.children[2], "FILE3.TXT", DirectoryEntryType::File, 9, 333, 0);
+}
+
+TEST_F(FileTreeBuilderIntegrationTest, KeepsDirectoryNodeWithInvalidZeroClusterWithoutTraversingIt)
+{
+    writeFatEntry(m_layout.rootCluster, fat::kEndOfChainMax);
+    writeEntry(m_layout.rootCluster, 0, "MY_USB     ", fat::kAttributeVolumeId);
+    writeEntry(m_layout.rootCluster, 1, "BROKEN     ", fat::kAttributeDirectory, 0);
+    ASSERT_NO_FATAL_FAILURE(saveImage());
+
+    fat32tree::BinaryReader reader(m_imagePath);
+    fat32tree::DirectoryEntryParser parser(
+        reader, std::make_unique<fat32tree::DirectoryEntryValidator>());
+    const auto parsed = parser.parse(
+        clusterOffset(m_layout.rootCluster) + fat::kDirectoryEntrySize);
+
+    // The parser accepts the readable entry; cluster validity is checked
+    // later by the real chain reader rather than by short-name validation.
+    ASSERT_EQ(parsed.state, fat32tree::DirectoryEntryState::Normal);
+    EXPECT_EQ(parsed.entry.name, "BROKEN");
+    EXPECT_EQ(parsed.entry.type, DirectoryEntryType::Directory);
+    EXPECT_EQ(parsed.entry.firstCluster, 0U);
+
+    fat32tree::FatTableReader fatTableReader(reader, m_layout);
+    const fat32tree::ClusterChainReader chainReader(fatTableReader, m_layout);
+    const auto chain = chainReader.getClusterChain(0);
+    EXPECT_EQ(chain.status, fat32tree::ClusterChainStatus::InvalidCluster);
+    EXPECT_TRUE(chain.clusters.empty());
+
+    fat32tree::FileTreeBuilder builder(m_layout, makeDirectoryReader(reader, fatTableReader));
+    const auto root = builder.buildTree();
+
+    expectNode(root, "MY_USB", DirectoryEntryType::Directory, m_layout.rootCluster, 0, 1);
+    ASSERT_EQ(root.children.size(), 1U);
+    const auto& broken = *root.children[0];
+    expectNode(broken, "BROKEN", DirectoryEntryType::Directory, 0, 0, 0);
+    EXPECT_TRUE(broken.children.empty());
+}
+
 } // namespace
