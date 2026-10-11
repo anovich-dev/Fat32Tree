@@ -2,7 +2,9 @@
 
 #include "fat32tree/FatEntry.h"
 #include "fat32tree/FatTableReader.h"
+#include "fat32tree/Logger.h"
 
+#include <string>
 #include <unordered_set>
 
 namespace fat32tree
@@ -21,18 +23,28 @@ namespace fat32tree
     std::unordered_set<std::uint32_t> visited;
 
     std::uint32_t currentCluster = firstCluster;
+    const auto warnIncompleteChain = [&result](const std::string& cause)
+    {
+        Logger::warning(cause + "; Cluster chain is incomplete; " +
+            std::to_string(result.clusters.size()) +
+            " cluster(s) were read before failure");
+    };
 
     while (true)
     {
         if (!isValidDataCluster(currentCluster))
         {
             result.status = ClusterChainStatus::InvalidCluster;
+            warnIncompleteChain("Invalid cluster encountered in chain: " +
+                std::to_string(currentCluster));
             return result;
         }
 
         if (!visited.insert(currentCluster).second)
         {
             result.status = ClusterChainStatus::CycleDetected;
+            warnIncompleteChain("Cluster chain cycle detected at cluster " +
+                std::to_string(currentCluster));
             return result;
         }
 
@@ -47,6 +59,8 @@ namespace fat32tree
         catch (const FatTableReadException&)
         {
             result.status = ClusterChainStatus::ReadError;
+            warnIncompleteChain("Failed to read FAT entry for cluster " +
+                std::to_string(currentCluster));
             return result;
         }
 
@@ -62,14 +76,20 @@ namespace fat32tree
 
             case FatEntryType::Free:
                 result.status = ClusterChainStatus::FreeCluster;
+                warnIncompleteChain("Free cluster encountered while traversing chain at cluster " +
+                    std::to_string(currentCluster));
                 break;
 
             case FatEntryType::Bad:
                 result.status = ClusterChainStatus::BadCluster;
+                warnIncompleteChain("Bad cluster encountered while traversing chain at cluster " +
+                    std::to_string(currentCluster));
                 break;
 
             case FatEntryType::Reserved:
                 result.status = ClusterChainStatus::ReservedValue;
+                warnIncompleteChain("Reserved FAT value encountered after cluster " +
+                    std::to_string(currentCluster));
                 break;
         }
 

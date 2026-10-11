@@ -22,6 +22,7 @@ add_library(fat32tree-core
     src/DirectoryReader.cpp
     src/FileTreeBuilder.cpp
     src/TreePrinter.cpp
+    src/Logger.cpp
 )
 
 target_include_directories(fat32tree-core

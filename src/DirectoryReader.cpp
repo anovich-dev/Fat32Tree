@@ -5,6 +5,7 @@
 #include "fat32tree/Fat32Constants.h"
 #include "fat32tree/ClusterChainReader.h"
 #include "fat32tree/DirectoryEntryParser.h"
+#include "fat32tree/Logger.h"
 
 namespace fat32tree
 {
@@ -52,6 +53,11 @@ RootDirectoryReadResult DirectoryReader::scanDirectory(std::uint32_t firstCluste
     const auto chainResult = m_chainReader->getClusterChain(firstCluster);
 
     result.chainStatus = chainResult.status;
+    if (chainResult.status != ClusterChainStatus::Complete)
+    {
+        Logger::warning("Directory starting at cluster " + std::to_string(firstCluster) +
+            " has an incomplete cluster chain");
+    }
 
     for (const std::uint32_t cluster : chainResult.clusters)
     {
@@ -90,8 +96,11 @@ RootDirectoryReadResult DirectoryReader::scanDirectory(std::uint32_t firstCluste
 
                 case DirectoryEntryState::Deleted:
                 case DirectoryEntryState::LongFileName:
-                case DirectoryEntryState::Invalid:
+                    continue;
 
+                case DirectoryEntryState::Invalid:
+                    Logger::warning("Invalid directory entry skipped at offset " +
+                        std::to_string(entryOffset));
                     continue;
 
                 case DirectoryEntryState::End:
