@@ -1,7 +1,5 @@
-#include <fat32tree/DirectoryEntryValidator.h>
-#include <fat32tree/Fat32Constants.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/DirectoryEntryValidator.h"
+#include "fat32tree/Fat32Constants.h"
 
 #include <algorithm>
 #include <array>
@@ -10,12 +8,12 @@
 #include <iomanip>
 #include <string_view>
 
+#include <gtest/gtest.h>
+
 namespace
 {
 
-using ShortName = std::array<
-    std::uint8_t,
-    fat32tree::fat32::kShortNameLength>;
+using ShortName = std::array<std::uint8_t, fat32tree::fat32::kShortNameLength>;
 
 ShortName makeShortName(std::string_view base, std::string_view extension = {})
 {
@@ -23,11 +21,8 @@ ShortName makeShortName(std::string_view base, std::string_view extension = {})
     name.fill(static_cast<std::uint8_t>(' '));
 
     std::copy_n(
-        base.begin(),
-        std::min(base.size(), fat32tree::fat32::kShortNameBaseLength),
-        name.begin());
-    std::copy_n(
-        extension.begin(),
+        base.begin(), std::min(base.size(), fat32tree::fat32::kShortNameBaseLength), name.begin());
+    std::copy_n(extension.begin(),
         std::min(extension.size(), fat32tree::fat32::kShortNameExtensionLength),
         name.begin() + fat32tree::fat32::kShortNameBaseLength);
 
@@ -37,12 +32,13 @@ ShortName makeShortName(std::string_view base, std::string_view extension = {})
 class DirectoryEntryValidatorTest : public ::testing::Test
 {
 protected:
-    fat32tree::DirectoryEntryValidator m_validator;
-
     bool isValid(const ShortName& name) const
     {
         return m_validator.isValidShortName(name);
     }
+
+protected:
+    fat32tree::DirectoryEntryValidator m_validator;
 };
 
 TEST_F(DirectoryEntryValidatorTest, ValidNormalShortNames)
@@ -76,9 +72,8 @@ TEST_F(DirectoryEntryValidatorTest, RejectsLowercaseExtension)
 
 TEST(DirectoryEntryValidatorForbiddenCharacterTest, RejectsForbiddenCharacters)
 {
-    constexpr std::array<std::uint8_t, 16> forbiddenCharacters{
-        0x22, 0x2A, 0x2B, 0x2C, 0x2E, 0x2F, 0x3A, 0x3B,
-        0x3C, 0x3D, 0x3E, 0x3F, 0x5B, 0x5C, 0x5D, 0x7C};
+    constexpr std::array<std::uint8_t, 16> forbiddenCharacters{0x22, 0x2A, 0x2B, 0x2C, 0x2E, 0x2F,
+        0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F, 0x5B, 0x5C, 0x5D, 0x7C};
     const fat32tree::DirectoryEntryValidator validator;
 
     for (const auto character : forbiddenCharacters)

@@ -1,12 +1,12 @@
-#include <fat32tree/Fat32Constants.h>
-#include <fat32tree/Fat32VolumeValidator.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/Fat32VolumeValidator.h"
 
 #include <array>
 #include <cstdint>
 #include <limits>
 #include <string>
+
+#include <gtest/gtest.h>
 
 namespace
 {
@@ -37,9 +37,7 @@ protected:
         return static_cast<std::uint64_t>(bpb.totalSectors32) * bpb.bytesPerSector;
     }
 
-    void expectFailure(
-        const fat32tree::Fat32Bpb& bpb,
-        std::uint64_t imageSize,
+    void expectFailure(const fat32tree::Fat32Bpb& bpb, std::uint64_t imageSize,
         fat32tree::ValidationErrorCategory expectedCategory,
         const std::string& expectedMessagePart = {}) const
     {
@@ -56,8 +54,7 @@ protected:
             if (!expectedMessagePart.empty())
             {
                 EXPECT_NE(
-                    std::string(exception.what()).find(expectedMessagePart),
-                    std::string::npos);
+                    std::string(exception.what()).find(expectedMessagePart), std::string::npos);
             }
         }
     }
@@ -110,10 +107,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsInvalidBytesPerSector)
     auto bpb = makeValidBpb();
     bpb.bytesPerSector = 513;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kBytesPerSectorFieldName);
 }
 
@@ -126,10 +120,8 @@ TEST_F(Fat32VolumeValidatorTest, AcceptsEveryLegalSectorsPerClusterValue)
     {
         auto bpb = makeValidBpb();
         bpb.sectorsPerCluster = sectorsPerCluster;
-        bpb.totalSectors32 = bpb.reservedSectorCount +
-                             bpb.fatCount * bpb.fatSize32 +
-                             fat32tree::fat32::kMinFat32ClusterCount *
-                                 sectorsPerCluster;
+        bpb.totalSectors32 = bpb.reservedSectorCount + bpb.fatCount * bpb.fatSize32 +
+                             fat32tree::fat32::kMinFat32ClusterCount * sectorsPerCluster;
 
         const auto layout = validator.validate(bpb, validImageSize(bpb));
 
@@ -147,10 +139,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsZeroNonPowerOfTwoAndOversizedCluster)
         auto bpb = makeValidBpb();
         bpb.sectorsPerCluster = sectorsPerCluster;
 
-        expectFailure(
-            bpb,
-            validImageSize(bpb),
-            fat32tree::ValidationErrorCategory::Malformed,
+        expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
             fat32tree::fat32::kSectorsPerClusterFieldName);
     }
 }
@@ -160,10 +149,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsInvalidBootSignature)
     auto bpb = makeValidBpb();
     bpb.signatureSecondByte = 0;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kBootSignatureFieldName);
 }
 
@@ -172,10 +158,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsNonzeroFat32FixedRootEntryCount)
     auto bpb = makeValidBpb();
     bpb.rootEntryCount = 1;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kRootEntryCountFieldName);
 }
 
@@ -184,10 +167,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsNonzeroTotalSectors16)
     auto bpb = makeValidBpb();
     bpb.totalSectors16 = 1;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kTotalSectors16FieldName);
 }
 
@@ -196,10 +176,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsNonzeroFatSize16)
     auto bpb = makeValidBpb();
     bpb.fatSize16 = 1;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kFatSize16FieldName);
 }
 
@@ -208,10 +185,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsUnsupportedFileSystemVersion)
     auto bpb = makeValidBpb();
     bpb.fileSystemVersion = 1;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Unsupported,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Unsupported,
         fat32tree::fat32::kFileSystemVersionFieldName);
 }
 
@@ -220,10 +194,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsZeroTotalSectors32)
     auto bpb = makeValidBpb();
     bpb.totalSectors32 = 0;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kTotalSectors32FieldName);
 }
 
@@ -232,10 +203,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsZeroReservedSectorCount)
     auto bpb = makeValidBpb();
     bpb.reservedSectorCount = 0;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kReservedSectorCountFieldName);
 }
 
@@ -244,10 +212,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsZeroFatCount)
     auto bpb = makeValidBpb();
     bpb.fatCount = 0;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kFatCountFieldName);
 }
 
@@ -268,10 +233,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsZeroFatSize32)
     auto bpb = makeValidBpb();
     bpb.fatSize32 = 0;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kFatSize32FieldName);
 }
 
@@ -290,8 +252,8 @@ TEST_F(Fat32VolumeValidatorTest, UsesFatZeroWhenMirroringIsEnabled)
 TEST_F(Fat32VolumeValidatorTest, SelectsConfiguredFatWhenMirroringIsDisabled)
 {
     auto bpb = makeValidBpb();
-    bpb.extendedFlags = static_cast<std::uint16_t>(
-        fat32tree::fat32::kFatMirroringDisabledMask | 1U);
+    bpb.extendedFlags =
+        static_cast<std::uint16_t>(fat32tree::fat32::kFatMirroringDisabledMask | 1U);
     fat32tree::Fat32VolumeValidator validator;
 
     const auto layout = validator.validate(bpb, validImageSize(bpb));
@@ -303,13 +265,10 @@ TEST_F(Fat32VolumeValidatorTest, SelectsConfiguredFatWhenMirroringIsDisabled)
 TEST_F(Fat32VolumeValidatorTest, RejectsActiveFatIndexOutsideFatCount)
 {
     auto bpb = makeValidBpb();
-    bpb.extendedFlags = static_cast<std::uint16_t>(
-        fat32tree::fat32::kFatMirroringDisabledMask | 2U);
+    bpb.extendedFlags =
+        static_cast<std::uint16_t>(fat32tree::fat32::kFatMirroringDisabledMask | 2U);
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Corrupted,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Corrupted,
         "Active FAT index");
 }
 
@@ -318,10 +277,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsFatRegionThatStartsOutsideVolume)
     auto bpb = makeValidBpb();
     bpb.fatSize32 = 35000;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Corrupted,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Corrupted,
         "Data region starts outside");
 }
 
@@ -329,10 +285,7 @@ TEST_F(Fat32VolumeValidatorTest, RejectsImageSmallerThanDeclaredVolume)
 {
     const auto bpb = makeValidBpb();
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb) - 1,
-        fat32tree::ValidationErrorCategory::Corrupted,
+    expectFailure(bpb, validImageSize(bpb) - 1, fat32tree::ValidationErrorCategory::Corrupted,
         "beyond the image size");
 }
 
@@ -349,22 +302,17 @@ TEST_F(Fat32VolumeValidatorTest, AcceptsImageExactlyAsLargeAsDeclaredVolume)
 TEST_F(Fat32VolumeValidatorTest, RejectsVolumeWithFewerThanFat32MinimumClusters)
 {
     auto bpb = makeValidBpb();
-    bpb.totalSectors32 = bpb.reservedSectorCount +
-                         bpb.fatCount * bpb.fatSize32 +
+    bpb.totalSectors32 = bpb.reservedSectorCount + bpb.fatCount * bpb.fatSize32 +
                          fat32tree::fat32::kMinFat32ClusterCount - 1;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         "FAT32 cluster count");
 }
 
 TEST_F(Fat32VolumeValidatorTest, AcceptsMinimumFat32ClusterCountAndHighestValidRootCluster)
 {
     auto bpb = makeValidBpb();
-    bpb.totalSectors32 = bpb.reservedSectorCount +
-                         bpb.fatCount * bpb.fatSize32 +
+    bpb.totalSectors32 = bpb.reservedSectorCount + bpb.fatCount * bpb.fatSize32 +
                          fat32tree::fat32::kMinFat32ClusterCount;
     bpb.rootCluster = fat32tree::fat32::kMinFat32ClusterCount + 1;
     fat32tree::Fat32VolumeValidator validator;
@@ -380,24 +328,18 @@ TEST_F(Fat32VolumeValidatorTest, RejectsRootClusterBelowTwo)
     auto bpb = makeValidBpb();
     bpb.rootCluster = 1;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Malformed,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Malformed,
         fat32tree::fat32::kRootClusterFieldName);
 }
 
 TEST_F(Fat32VolumeValidatorTest, RejectsRootClusterPastDataClusterRange)
 {
     auto bpb = makeValidBpb();
-    const auto clusterCount = bpb.totalSectors32 - bpb.reservedSectorCount -
-                              bpb.fatCount * bpb.fatSize32;
+    const auto clusterCount =
+        bpb.totalSectors32 - bpb.reservedSectorCount - bpb.fatCount * bpb.fatSize32;
     bpb.rootCluster = clusterCount + 2;
 
-    expectFailure(
-        bpb,
-        validImageSize(bpb),
-        fat32tree::ValidationErrorCategory::Corrupted,
+    expectFailure(bpb, validImageSize(bpb), fat32tree::ValidationErrorCategory::Corrupted,
         "Root cluster is outside");
 }
 
@@ -409,11 +351,8 @@ TEST_F(Fat32VolumeValidatorTest, RejectsMaximumDeclaredVolumeLargerThanImage)
 
     // BPB field widths bound this product well below uint64_t's limit; reject
     // the mismatch with the actual image size instead.
-    expectFailure(
-        bpb,
-        validImageSize(makeValidBpb()),
-        fat32tree::ValidationErrorCategory::Corrupted,
-        "beyond the image size");
+    expectFailure(bpb, validImageSize(makeValidBpb()),
+        fat32tree::ValidationErrorCategory::Corrupted, "beyond the image size");
 }
 
 TEST_F(Fat32VolumeValidatorTest, AcceptsImageLargerThanDeclaredVolume)
@@ -424,7 +363,6 @@ TEST_F(Fat32VolumeValidatorTest, AcceptsImageLargerThanDeclaredVolume)
     const auto layout = validator.validate(bpb, validImageSize(bpb) + 4096);
 
     EXPECT_EQ(layout.volumeSize, validImageSize(bpb));
+}
 
-} 
-
-}// namespace
+} // namespace

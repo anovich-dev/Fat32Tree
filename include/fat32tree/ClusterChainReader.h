@@ -1,15 +1,14 @@
 #pragma once
 
-#include "IClusterChainReader.h"
-
-#include "ClusterChainResult.h"
+#include "fat32tree/ClusterChainResult.h"
+#include "fat32tree/IClusterChainReader.h"
 
 #include <cstdint>
 
 namespace fat32tree
 {
 
-class Fat32VolumeLayout;
+struct Fat32VolumeLayout;
 class FatTableReader;
 
 class ClusterChainReader final : public IClusterChainReader
@@ -22,6 +21,7 @@ public:
 private:
     bool isValidDataCluster(std::uint32_t clusterNumber) const;
 
+private:
     FatTableReader& m_fatTableReader;
     const Fat32VolumeLayout& m_layout;
 };

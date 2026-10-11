@@ -1,9 +1,10 @@
 #include "fat32tree/FatEntryParser.h"
+
 #include "fat32tree/Fat32Constants.h"
 
 namespace fat32tree
 {
-    
+
 FatEntry FatEntryParser::parse(std::uint32_t rawValue) const
 {
     const std::uint32_t value = rawValue & fat32::kFatEntryValueMask;

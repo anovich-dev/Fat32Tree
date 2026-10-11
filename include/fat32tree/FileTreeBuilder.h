@@ -1,38 +1,37 @@
 #pragma once
 
-#include "Fat32VolumeLayout.h"
-#include "FileNode.h"
+#include "fat32tree/FileNode.h"
+#include "fat32tree/IDirectoryReader.h"
 
+#include <cstdint>
 #include <memory>
-#include <unordered_set>
 #include <stack>
+#include <unordered_set>
+#include <vector>
 
 namespace fat32tree
 {
 
-class IDirectoryReader;
+struct Fat32VolumeLayout;
 
 class FileTreeBuilder
 {
 public:
-    FileTreeBuilder(const Fat32VolumeLayout &layout,
-                    std::unique_ptr<IDirectoryReader> directoryReader);
+    FileTreeBuilder(
+        const Fat32VolumeLayout& layout, std::unique_ptr<IDirectoryReader> directoryReader);
 
     FileNode buildTree();
 
 private:
-
     struct DirectoryWorkItem
     {
         FileNode* node;
         std::uint32_t firstCluster;
     };
 
-    void addEntries(
-        FileNode &parent,
-        const std::vector<DirectoryEntry> &entries,
-        std::unordered_set<std::uint32_t> &visitedDirectories,
-        std::stack<DirectoryWorkItem> &directoryItemsStack);
+    void addEntries(FileNode& parent, const std::vector<DirectoryEntry>& entries,
+        std::unordered_set<std::uint32_t>& visitedDirectories,
+        std::stack<DirectoryWorkItem>& directoryItemsStack);
 
 private:
     const Fat32VolumeLayout& m_layout;

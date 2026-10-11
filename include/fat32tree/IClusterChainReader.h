@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cstdint>
+#include "fat32tree/ClusterChainResult.h"
 
-#include "ClusterChainResult.h"
+#include <cstdint>
 
 namespace fat32tree
 {

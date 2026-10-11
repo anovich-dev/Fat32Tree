@@ -1,12 +1,11 @@
 #pragma once
 
-#include <cstdint>
+#include "fat32tree/ClusterChainResult.h"
+#include "fat32tree/DirectoryEntry.h"
+
 #include <optional>
 #include <string>
 #include <vector>
-
-#include "ClusterChainResult.h"
-#include "DirectoryEntry.h"
 
 namespace fat32tree
 {

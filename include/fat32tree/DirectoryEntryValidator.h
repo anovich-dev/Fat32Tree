@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IDirectoryEntryValidator.h"
+#include "fat32tree/IDirectoryEntryValidator.h"
 
 #include "fat32tree/Fat32Constants.h"
 
@@ -13,7 +13,8 @@ namespace fat32tree
 class DirectoryEntryValidator final : public IDirectoryEntryValidator
 {
 public:
-    bool isValidShortName(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const override;
+    bool isValidShortName(
+        std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const override;
 
 private:
     bool isDotEntry(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const;
@@ -23,4 +24,4 @@ private:
     bool isForbiddenCharacter(std::uint8_t byte) const;
 };
 
-}// namespace fat32tree
+} // namespace fat32tree

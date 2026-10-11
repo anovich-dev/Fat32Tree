@@ -1,7 +1,6 @@
-#include <fat32tree/BootSectorParser.h>
-#include <fat32tree/Fat32Constants.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/BinaryReader.h"
+#include "fat32tree/BootSectorParser.h"
+#include "fat32tree/Fat32Constants.h"
 
 #include <atomic>
 #include <chrono>
@@ -12,6 +11,8 @@
 #include <string>
 #include <system_error>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 namespace
 {
@@ -24,16 +25,13 @@ protected:
     void SetUp() override
     {
         static std::atomic<std::uint64_t> nextId{0};
-        const auto timestamp = std::chrono::high_resolution_clock::now()
-                                   .time_since_epoch()
-                                   .count();
+        const auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         const auto temporaryRoot = std::filesystem::temp_directory_path();
 
         for (int attempt = 0; attempt < 100; ++attempt)
         {
-            const auto directoryName =
-                "Fat32Tree-BootSectorParser-" + std::to_string(timestamp) +
-                "-" + std::to_string(nextId.fetch_add(1));
+            const auto directoryName = "Fat32Tree-BootSectorParser-" + std::to_string(timestamp) +
+                                       "-" + std::to_string(nextId.fetch_add(1));
             const auto candidate = temporaryRoot / directoryName;
             std::error_code error;
 
@@ -60,25 +58,19 @@ protected:
     {
         std::ofstream output(m_imagePath, std::ios::binary);
         ASSERT_TRUE(output.is_open());
-        output.write(
-            reinterpret_cast<const char*>(bytes.data()),
+        output.write(reinterpret_cast<const char*>(bytes.data()),
             static_cast<std::streamsize>(bytes.size()));
         output.close();
         ASSERT_TRUE(output.good());
     }
 
-    static void writeU8(
-        std::vector<std::uint8_t>& bytes,
-        std::uint64_t offset,
-        std::uint8_t value)
+    static void writeU8(std::vector<std::uint8_t>& bytes, std::uint64_t offset, std::uint8_t value)
     {
         bytes.at(static_cast<std::size_t>(offset)) = value;
     }
 
     static void writeU16LE(
-        std::vector<std::uint8_t>& bytes,
-        std::uint64_t offset,
-        std::uint16_t value)
+        std::vector<std::uint8_t>& bytes, std::uint64_t offset, std::uint16_t value)
     {
         const auto index = static_cast<std::size_t>(offset);
         bytes.at(index) = static_cast<std::uint8_t>(value & 0xFFU);
@@ -86,9 +78,7 @@ protected:
     }
 
     static void writeU32LE(
-        std::vector<std::uint8_t>& bytes,
-        std::uint64_t offset,
-        std::uint32_t value)
+        std::vector<std::uint8_t>& bytes, std::uint64_t offset, std::uint32_t value)
     {
         const auto index = static_cast<std::size_t>(offset);
         bytes.at(index) = static_cast<std::uint8_t>(value & 0xFFU);
@@ -102,6 +92,7 @@ protected:
         return std::vector<std::uint8_t>(kBootSectorSize, 0);
     }
 
+protected:
     std::filesystem::path m_temporaryDirectory;
     std::filesystem::path m_imagePath;
 };
@@ -193,9 +184,7 @@ TEST_F(BootSectorParserTest, ExceptionContainsFieldName)
     }
     catch (const fat32tree::BootSectorParseException& exception)
     {
-        EXPECT_NE(
-            std::string(exception.what()).find(
-                fat32tree::fat32::kRootClusterFieldName),
+        EXPECT_NE(std::string(exception.what()).find(fat32tree::fat32::kRootClusterFieldName),
             std::string::npos);
     }
 }

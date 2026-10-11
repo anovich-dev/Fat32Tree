@@ -1,14 +1,13 @@
-#include <fat32tree/BinaryReader.h>
-#include <fat32tree/ClusterChainReader.h>
-#include <fat32tree/DirectoryEntryParser.h>
-#include <fat32tree/DirectoryEntryValidator.h>
-#include <fat32tree/DirectoryReader.h>
-#include <fat32tree/Fat32Constants.h>
-#include <fat32tree/Fat32VolumeLayout.h>
-#include <fat32tree/FatTableReader.h>
-#include <fat32tree/FileTreeBuilder.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/BinaryReader.h"
+#include "fat32tree/ClusterChainReader.h"
+#include "fat32tree/DirectoryEntryParser.h"
+#include "fat32tree/DirectoryEntryValidator.h"
+#include "fat32tree/DirectoryReader.h"
+#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/Fat32VolumeLayout.h"
+#include "fat32tree/FatTableReader.h"
+#include "fat32tree/FileNode.h"
+#include "fat32tree/FileTreeBuilder.h"
 
 #include <atomic>
 #include <chrono>
@@ -22,6 +21,8 @@
 #include <system_error>
 #include <utility>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 namespace
 {
@@ -54,14 +55,13 @@ protected:
         m_image.resize(static_cast<std::size_t>(m_layout.volumeSize), 0);
 
         static std::atomic<std::uint64_t> nextId{0};
-        const auto timestamp = std::chrono::high_resolution_clock::now()
-            .time_since_epoch().count();
+        const auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         const auto temporaryRoot = std::filesystem::temp_directory_path();
         for (int attempt = 0; attempt < 100; ++attempt)
         {
-            const auto candidate = temporaryRoot /
-                ("Fat32Tree-FileTreeIntegration-" + std::to_string(timestamp) +
-                 "-" + std::to_string(nextId.fetch_add(1)));
+            const auto candidate =
+                temporaryRoot / ("Fat32Tree-FileTreeIntegration-" + std::to_string(timestamp) +
+                                    "-" + std::to_string(nextId.fetch_add(1)));
             std::error_code error;
             if (std::filesystem::create_directory(candidate, error))
             {
@@ -94,19 +94,17 @@ protected:
 
     void writeFatEntry(std::uint32_t cluster, std::uint32_t value)
     {
-        writeLE(static_cast<std::size_t>(m_layout.selectedFatOffset) +
-                    cluster * fat::kFatEntrySize, value, 4);
+        writeLE(static_cast<std::size_t>(m_layout.selectedFatOffset) + cluster * fat::kFatEntrySize,
+            value, 4);
     }
 
     std::size_t clusterOffset(std::uint32_t cluster) const
     {
-        return static_cast<std::size_t>(m_layout.dataOffset +
-            (cluster - 2) * m_layout.clusterSize);
+        return static_cast<std::size_t>(m_layout.dataOffset + (cluster - 2) * m_layout.clusterSize);
     }
 
-    void writeEntry(std::uint32_t cluster, std::size_t index,
-                    std::string_view rawName, std::uint8_t attributes,
-                    std::uint32_t firstCluster = 0, std::uint32_t fileSize = 0)
+    void writeEntry(std::uint32_t cluster, std::size_t index, std::string_view rawName,
+        std::uint8_t attributes, std::uint32_t firstCluster = 0, std::uint32_t fileSize = 0)
     {
         ASSERT_EQ(rawName.size(), fat::kShortNameLength);
         ASSERT_LT(index, m_layout.clusterSize / fat::kDirectoryEntrySize);
@@ -142,7 +140,7 @@ protected:
         std::ofstream image(m_imagePath, std::ios::binary);
         ASSERT_TRUE(image.is_open());
         image.write(reinterpret_cast<const char*>(m_image.data()),
-                    static_cast<std::streamsize>(m_image.size()));
+            static_cast<std::streamsize>(m_image.size()));
         image.close();
         ASSERT_TRUE(image.good());
     }
@@ -150,16 +148,15 @@ protected:
     std::unique_ptr<fat32tree::DirectoryReader> makeDirectoryReader(
         fat32tree::BinaryReader& reader, fat32tree::FatTableReader& fatTableReader)
     {
-        return std::make_unique<fat32tree::DirectoryReader>(
-            m_layout,
+        return std::make_unique<fat32tree::DirectoryReader>(m_layout,
             std::make_unique<fat32tree::ClusterChainReader>(fatTableReader, m_layout),
             std::make_unique<fat32tree::DirectoryEntryParser>(
                 reader, std::make_unique<fat32tree::DirectoryEntryValidator>()));
     }
 
     static void expectNode(const fat32tree::FileNode& node, std::string_view name,
-                           DirectoryEntryType type, std::uint32_t firstCluster,
-                           std::uint32_t fileSize, std::size_t childCount)
+        DirectoryEntryType type, std::uint32_t firstCluster, std::uint32_t fileSize,
+        std::size_t childCount)
     {
         SCOPED_TRACE(name);
         EXPECT_EQ(node.name, name);
@@ -169,6 +166,7 @@ protected:
         EXPECT_EQ(node.children.size(), childCount);
     }
 
+protected:
     fat32tree::Fat32VolumeLayout m_layout{};
     std::vector<std::uint8_t> m_image;
     std::filesystem::path m_temporaryDirectory;
@@ -323,8 +321,8 @@ TEST_F(FileTreeBuilderIntegrationTest, KeepsDirectoryNodeWithInvalidZeroClusterW
     fat32tree::BinaryReader reader(m_imagePath);
     fat32tree::DirectoryEntryParser parser(
         reader, std::make_unique<fat32tree::DirectoryEntryValidator>());
-    const auto parsed = parser.parse(
-        clusterOffset(m_layout.rootCluster) + fat::kDirectoryEntrySize);
+    const auto parsed =
+        parser.parse(clusterOffset(m_layout.rootCluster) + fat::kDirectoryEntrySize);
 
     // The parser accepts the readable entry; cluster validity is checked
     // later by the real chain reader rather than by short-name validation.

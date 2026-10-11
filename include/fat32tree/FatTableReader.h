@@ -1,7 +1,5 @@
 #pragma once
 
-#include "fat32tree/BinaryReader.h"
-#include "fat32tree/Fat32VolumeLayout.h"
 #include "fat32tree/FatEntry.h"
 #include "fat32tree/FatEntryParser.h"
 
@@ -12,11 +10,13 @@
 namespace fat32tree
 {
 
+class BinaryReader;
+struct Fat32VolumeLayout;
+
 class FatTableReadException : public std::runtime_error
 {
 public:
-    explicit FatTableReadException(const std::string& message)
-        : std::runtime_error(message)
+    explicit FatTableReadException(const std::string& message) : std::runtime_error(message)
     {
     }
 };

@@ -1,11 +1,12 @@
-#include <fat32tree/TreePrinter.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/FileNode.h"
+#include "fat32tree/TreePrinter.h"
 
 #include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
+
+#include <gtest/gtest.h>
 
 namespace
 {
@@ -21,8 +22,8 @@ FileNode makeDirectory(std::string name)
 
 FileNode& addChild(FileNode& parent, std::string name, DirectoryEntryType type)
 {
-    parent.children.push_back(std::make_unique<FileNode>(
-        FileNode{std::move(name), type, 0, 0, {}}));
+    parent.children.push_back(
+        std::make_unique<FileNode>(FileNode{std::move(name), type, 0, 0, {}}));
     return *parent.children.back();
 }
 
@@ -67,9 +68,8 @@ TEST(TreePrinterTest, PrintsSingleFile)
 
     printer.print(root, output);
 
-    EXPECT_EQ(output.str(),
-        "/\n"
-        "└── FILE.TXT\n");
+    EXPECT_EQ(output.str(), "/\n"
+                            "└── FILE.TXT\n");
 }
 
 TEST(TreePrinterTest, PrintsSingleDirectory)
@@ -81,9 +81,8 @@ TEST(TreePrinterTest, PrintsSingleDirectory)
 
     printer.print(root, output);
 
-    EXPECT_EQ(output.str(),
-        "/\n"
-        "└── DOCS/\n");
+    EXPECT_EQ(output.str(), "/\n"
+                            "└── DOCS/\n");
 }
 
 TEST(TreePrinterTest, PrintsMultipleRootChildren)
@@ -97,11 +96,10 @@ TEST(TreePrinterTest, PrintsMultipleRootChildren)
 
     printer.print(root, output);
 
-    EXPECT_EQ(output.str(),
-        "/\n"
-        "├── A.TXT\n"
-        "├── B.TXT\n"
-        "└── DIR/\n");
+    EXPECT_EQ(output.str(), "/\n"
+                            "├── A.TXT\n"
+                            "├── B.TXT\n"
+                            "└── DIR/\n");
 }
 
 TEST(TreePrinterTest, PrintsNestedDirectory)
@@ -114,10 +112,9 @@ TEST(TreePrinterTest, PrintsNestedDirectory)
 
     printer.print(root, output);
 
-    EXPECT_EQ(output.str(),
-        "/\n"
-        "└── DIR/\n"
-        "    └── FILE.TXT\n");
+    EXPECT_EQ(output.str(), "/\n"
+                            "└── DIR/\n"
+                            "    └── FILE.TXT\n");
 }
 
 TEST(TreePrinterTest, PrintsMultipleLevelsWithCorrectPrefixes)
@@ -134,14 +131,13 @@ TEST(TreePrinterTest, PrintsMultipleLevelsWithCorrectPrefixes)
 
     printer.print(root, output);
 
-    EXPECT_EQ(output.str(),
-        "MY_USB/\n"
-        "├── README.TXT\n"
-        "├── PHOTOS/\n"
-        "│   ├── A.JPG\n"
-        "│   └── TRIP/\n"
-        "│       └── B.JPG\n"
-        "└── EMPTYDIR/\n");
+    EXPECT_EQ(output.str(), "MY_USB/\n"
+                            "├── README.TXT\n"
+                            "├── PHOTOS/\n"
+                            "│   ├── A.JPG\n"
+                            "│   └── TRIP/\n"
+                            "│       └── B.JPG\n"
+                            "└── EMPTYDIR/\n");
 }
 
 TEST(TreePrinterTest, PreservesChildrenOrder)
@@ -155,11 +151,10 @@ TEST(TreePrinterTest, PreservesChildrenOrder)
 
     printer.print(root, output);
 
-    EXPECT_EQ(output.str(),
-        "/\n"
-        "├── FIRST.TXT\n"
-        "├── SECOND.TXT\n"
-        "└── THIRD.TXT\n");
+    EXPECT_EQ(output.str(), "/\n"
+                            "├── FIRST.TXT\n"
+                            "├── SECOND.TXT\n"
+                            "└── THIRD.TXT\n");
 }
 
 TEST(TreePrinterTest, PrintsEmptyDirectory)
@@ -172,9 +167,8 @@ TEST(TreePrinterTest, PrintsEmptyDirectory)
 
     printer.print(root, output);
 
-    EXPECT_EQ(output.str(),
-        "/\n"
-        "└── EMPTY/\n");
+    EXPECT_EQ(output.str(), "/\n"
+                            "└── EMPTY/\n");
 }
 
 TEST(TreePrinterTest, PrintsSiblingDirectoriesWithDifferentDepths)
@@ -190,13 +184,12 @@ TEST(TreePrinterTest, PrintsSiblingDirectoriesWithDifferentDepths)
 
     printer.print(root, output);
 
-    EXPECT_EQ(output.str(),
-        "/\n"
-        "├── A/\n"
-        "│   └── A1/\n"
-        "│       └── FILE.TXT\n"
-        "└── B/\n"
-        "    └── B.TXT\n");
+    EXPECT_EQ(output.str(), "/\n"
+                            "├── A/\n"
+                            "│   └── A1/\n"
+                            "│       └── FILE.TXT\n"
+                            "└── B/\n"
+                            "    └── B.TXT\n");
 }
 
 } // namespace

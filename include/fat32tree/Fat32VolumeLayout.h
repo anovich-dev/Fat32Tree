@@ -34,4 +34,4 @@ struct Fat32VolumeLayout
     std::uint32_t rootCluster = 0;
 };
 
-} // namespace fat32trees
+} // namespace fat32tree

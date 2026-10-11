@@ -1,17 +1,20 @@
-#include <fat32tree/BinaryReader.h>
-#include <fat32tree/BootSectorParser.h>
-#include <fat32tree/Fat32Constants.h>
-#include <fat32tree/Fat32VolumeValidator.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/BinaryReader.h"
+#include "fat32tree/BootSectorParser.h"
+#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/Fat32VolumeLayout.h"
+#include "fat32tree/Fat32VolumeValidator.h"
 
 #include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <system_error>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 namespace
 {
@@ -27,16 +30,13 @@ protected:
     void SetUp() override
     {
         static std::atomic<std::uint64_t> nextId{0};
-        const auto timestamp = std::chrono::high_resolution_clock::now()
-                                   .time_since_epoch()
-                                   .count();
+        const auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         const auto temporaryRoot = std::filesystem::temp_directory_path();
 
         for (int attempt = 0; attempt < 100; ++attempt)
         {
-            const auto directoryName =
-                "Fat32Tree-Initialization-" + std::to_string(timestamp) + "-" +
-                std::to_string(nextId.fetch_add(1));
+            const auto directoryName = "Fat32Tree-Initialization-" + std::to_string(timestamp) +
+                                       "-" + std::to_string(nextId.fetch_add(1));
             const auto candidate = temporaryRoot / directoryName;
             std::error_code error;
 
@@ -56,65 +56,24 @@ protected:
         ASSERT_TRUE(image.is_open());
 
         std::vector<std::uint8_t> bootSector(512, 0);
-        writeU16LE(
-            bootSector,
-            fat32tree::fat32::kBytesPerSectorOffset,
-            kBytesPerSector);
-        writeU8(
-            bootSector,
-            fat32tree::fat32::kSectorsPerClusterOffset,
-            1);
-        writeU16LE(
-            bootSector,
-            fat32tree::fat32::kReservedSectorCountOffset,
-            32);
-        writeU8(
-            bootSector,
-            fat32tree::fat32::kFatCountOffset,
-            2);
-        writeU16LE(
-            bootSector,
-            fat32tree::fat32::kRootEntryCountOffset,
-            0);
-        writeU16LE(
-            bootSector,
-            fat32tree::fat32::kTotalSectors16Offset,
-            0);
-        writeU16LE(
-            bootSector,
-            fat32tree::fat32::kFatSize16Offset,
-            0);
-        writeU32LE(
-            bootSector,
-            fat32tree::fat32::kTotalSectors32Offset,
-            kTotalSectors);
-        writeU32LE(
-            bootSector,
-            fat32tree::fat32::kFatSize32Offset,
-            1000);
-        writeU16LE(
-            bootSector,
-            fat32tree::fat32::kExtendedFlagsOffset,
-            0);
-        writeU16LE(
-            bootSector,
-            fat32tree::fat32::kFileSystemVersionOffset,
-            0);
-        writeU32LE(
-            bootSector,
-            fat32tree::fat32::kRootClusterOffset,
-            2);
-        writeU8(
-            bootSector,
-            fat32tree::fat32::kBootSignatureOffset,
+        writeU16LE(bootSector, fat32tree::fat32::kBytesPerSectorOffset, kBytesPerSector);
+        writeU8(bootSector, fat32tree::fat32::kSectorsPerClusterOffset, 1);
+        writeU16LE(bootSector, fat32tree::fat32::kReservedSectorCountOffset, 32);
+        writeU8(bootSector, fat32tree::fat32::kFatCountOffset, 2);
+        writeU16LE(bootSector, fat32tree::fat32::kRootEntryCountOffset, 0);
+        writeU16LE(bootSector, fat32tree::fat32::kTotalSectors16Offset, 0);
+        writeU16LE(bootSector, fat32tree::fat32::kFatSize16Offset, 0);
+        writeU32LE(bootSector, fat32tree::fat32::kTotalSectors32Offset, kTotalSectors);
+        writeU32LE(bootSector, fat32tree::fat32::kFatSize32Offset, 1000);
+        writeU16LE(bootSector, fat32tree::fat32::kExtendedFlagsOffset, 0);
+        writeU16LE(bootSector, fat32tree::fat32::kFileSystemVersionOffset, 0);
+        writeU32LE(bootSector, fat32tree::fat32::kRootClusterOffset, 2);
+        writeU8(bootSector, fat32tree::fat32::kBootSignatureOffset,
             fat32tree::fat32::kBootSignatureFirstByte);
-        writeU8(
-            bootSector,
-            fat32tree::fat32::kBootSignatureOffset + 1,
+        writeU8(bootSector, fat32tree::fat32::kBootSignatureOffset + 1,
             fat32tree::fat32::kBootSignatureSecondByte);
 
-        image.write(
-            reinterpret_cast<const char*>(bootSector.data()),
+        image.write(reinterpret_cast<const char*>(bootSector.data()),
             static_cast<std::streamsize>(bootSector.size()));
         ASSERT_TRUE(image.good());
 
@@ -134,18 +93,13 @@ protected:
         std::filesystem::remove_all(m_temporaryDirectory, error);
     }
 
-    static void writeU8(
-        std::vector<std::uint8_t>& bytes,
-        std::uint64_t offset,
-        std::uint8_t value)
+    static void writeU8(std::vector<std::uint8_t>& bytes, std::uint64_t offset, std::uint8_t value)
     {
         bytes.at(static_cast<std::size_t>(offset)) = value;
     }
 
     static void writeU16LE(
-        std::vector<std::uint8_t>& bytes,
-        std::uint64_t offset,
-        std::uint16_t value)
+        std::vector<std::uint8_t>& bytes, std::uint64_t offset, std::uint16_t value)
     {
         const auto index = static_cast<std::size_t>(offset);
         bytes.at(index) = static_cast<std::uint8_t>(value & 0xFFU);
@@ -153,9 +107,7 @@ protected:
     }
 
     static void writeU32LE(
-        std::vector<std::uint8_t>& bytes,
-        std::uint64_t offset,
-        std::uint32_t value)
+        std::vector<std::uint8_t>& bytes, std::uint64_t offset, std::uint32_t value)
     {
         const auto index = static_cast<std::size_t>(offset);
         bytes.at(index) = static_cast<std::uint8_t>(value & 0xFFU);
@@ -164,6 +116,7 @@ protected:
         bytes.at(index + 3) = static_cast<std::uint8_t>((value >> 24) & 0xFFU);
     }
 
+protected:
     std::filesystem::path m_temporaryDirectory;
     std::filesystem::path m_imagePath;
 };
@@ -192,8 +145,7 @@ TEST_F(Fat32InitializationTest, ReadsAndValidatesSyntheticFat32Image)
     EXPECT_EQ(bpb.signatureSecondByte, 0xAAU);
 
     const fat32tree::Fat32VolumeValidator validator;
-    const fat32tree::Fat32VolumeLayout layout =
-        validator.validate(bpb, reader.size());
+    const fat32tree::Fat32VolumeLayout layout = validator.validate(bpb, reader.size());
 
     EXPECT_EQ(layout.bytesPerSector, 512U);
     EXPECT_EQ(layout.sectorsPerCluster, 1U);

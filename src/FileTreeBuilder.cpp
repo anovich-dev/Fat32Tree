@@ -1,6 +1,7 @@
 #include "fat32tree/FileTreeBuilder.h"
 
 #include "fat32tree/DirectoryReader.h"
+#include "fat32tree/Fat32VolumeLayout.h"
 #include "fat32tree/Logger.h"
 
 #include <utility>
@@ -88,21 +89,22 @@ void FileTreeBuilder::addEntries(
             if (visitedDirectories.contains(childPtr->firstCluster))
             {
                 Logger::warning("Directory '" + childPtr->name +
-                    "' points to already visited cluster " +
-                    std::to_string(childPtr->firstCluster) + "; skipping repeated traversal");
+                "' points to already visited cluster " +
+                std::to_string(childPtr->firstCluster) + "; skipping repeated traversal");
             }
             else
             {
                 visitedDirectories.insert(
-                    childPtr->firstCluster);
+                childPtr->firstCluster);
 
-                directoryItemsStack.push(
-                    DirectoryWorkItem{
-                        childPtr,
-                        childPtr->firstCluster
-                    });
+            directoryItemsStack.push(
+                DirectoryWorkItem{
+                    childPtr,
+                    childPtr->firstCluster
+                });
             }
         }
     }
 }
+
 } // namespace fat32tree

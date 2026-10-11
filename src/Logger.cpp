@@ -55,15 +55,11 @@ void Logger::initializeImpl()
 
     m_logFilePath = generateLogFilePath();
 
-    m_logFile.open(
-        m_logFilePath,
-        std::ios::out | std::ios::app);
+    m_logFile.open(m_logFilePath, std::ios::out | std::ios::app);
 
     if (!m_logFile.is_open())
     {
-        throw std::runtime_error(
-            "Failed to open log file: " +
-            m_logFilePath.string());
+        throw std::runtime_error("Failed to open log file: " + m_logFilePath.string());
     }
 }
 
@@ -124,9 +120,7 @@ std::filesystem::path Logger::generateLogFilePath() const
     if (!std::filesystem::exists(desktopPath) ||
         !std::filesystem::is_directory(desktopPath))
     {
-        throw std::runtime_error(
-            "Desktop directory does not exist: " +
-            desktopPath.string());
+        throw std::runtime_error("Desktop directory does not exist: " + desktopPath.string());
     }
 
     const std::string baseName = "Logger_" + fileTimestamp();
@@ -174,9 +168,7 @@ std::string Logger::fileTimestamp() const
     const std::tm localTime = getLocalTime(time);
 
     const auto milliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            now.time_since_epoch()) %
-        1000;
+        std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
 
     std::ostringstream stream;
 
@@ -185,13 +177,12 @@ std::string Logger::fileTimestamp() const
         << '_'
         << std::setfill('0')
         << std::setw(3)
-        << milliseconds.count();
+           << milliseconds.count();
 
     return stream.str();
 }
 
-std::tm Logger::getLocalTime(
-    std::time_t time) const
+std::tm Logger::getLocalTime(std::time_t time) const
 {
     std::tm result{};
 
@@ -199,16 +190,14 @@ std::tm Logger::getLocalTime(
 
     if (localtime_s(&result, &time) != 0)
     {
-        throw std::runtime_error(
-            "Failed to convert timestamp to local time");
+        throw std::runtime_error("Failed to convert timestamp to local time");
     }
 
 #else
 
     if (localtime_r(&time, &result) == nullptr)
     {
-        throw std::runtime_error(
-            "Failed to convert timestamp to local time");
+        throw std::runtime_error("Failed to convert timestamp to local time");
     }
 
 #endif

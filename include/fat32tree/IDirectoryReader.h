@@ -1,6 +1,8 @@
 #pragma once
 
-#include "DirectoryReadResult.h"
+#include "fat32tree/DirectoryReadResult.h"
+
+#include <cstdint>
 
 namespace fat32tree
 {

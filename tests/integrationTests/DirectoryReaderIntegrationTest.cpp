@@ -1,13 +1,11 @@
-#include <fat32tree/BinaryReader.h>
-#include <fat32tree/ClusterChainReader.h>
-#include <fat32tree/DirectoryEntryParser.h>
-#include <fat32tree/DirectoryEntryValidator.h>
-#include <fat32tree/DirectoryReader.h>
-#include <fat32tree/Fat32Constants.h>
-#include <fat32tree/Fat32VolumeLayout.h>
-#include <fat32tree/FatTableReader.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/BinaryReader.h"
+#include "fat32tree/ClusterChainReader.h"
+#include "fat32tree/DirectoryEntryParser.h"
+#include "fat32tree/DirectoryEntryValidator.h"
+#include "fat32tree/DirectoryReader.h"
+#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/Fat32VolumeLayout.h"
+#include "fat32tree/FatTableReader.h"
 
 #include <atomic>
 #include <chrono>
@@ -19,8 +17,9 @@
 #include <string>
 #include <string_view>
 #include <system_error>
-#include <utility>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 namespace
 {
@@ -33,14 +32,13 @@ protected:
     void SetUp() override
     {
         static std::atomic<std::uint64_t> nextId{0};
-        const auto timestamp = std::chrono::high_resolution_clock::now()
-            .time_since_epoch().count();
+        const auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         const auto temporaryRoot = std::filesystem::temp_directory_path();
         for (int attempt = 0; attempt < 100; ++attempt)
         {
-            const auto candidate = temporaryRoot /
-                ("Fat32Tree-DirectoryIntegration-" + std::to_string(timestamp) +
-                 "-" + std::to_string(nextId.fetch_add(1)));
+            const auto candidate =
+                temporaryRoot / ("Fat32Tree-DirectoryIntegration-" + std::to_string(timestamp) +
+                                    "-" + std::to_string(nextId.fetch_add(1)));
             std::error_code error;
             if (std::filesystem::create_directory(candidate, error))
             {
@@ -68,13 +66,13 @@ protected:
         std::ofstream image(m_imagePath, std::ios::binary);
         ASSERT_TRUE(image.is_open());
         image.write(reinterpret_cast<const char*>(bytes.data()),
-                    static_cast<std::streamsize>(bytes.size()));
+            static_cast<std::streamsize>(bytes.size()));
         image.close();
         ASSERT_TRUE(image.good());
     }
 
-    static void writeLE(std::vector<std::uint8_t>& bytes, std::size_t offset,
-                        std::uint32_t value, std::size_t byteCount)
+    static void writeLE(std::vector<std::uint8_t>& bytes, std::size_t offset, std::uint32_t value,
+        std::size_t byteCount)
     {
         for (std::size_t i = 0; i < byteCount; ++i)
         {
@@ -83,8 +81,7 @@ protected:
     }
 
     static void writeFileEntry(std::vector<std::uint8_t>& bytes, std::size_t offset,
-                               std::string_view rawName, std::uint32_t cluster,
-                               std::uint32_t size)
+        std::string_view rawName, std::uint32_t cluster, std::uint32_t size)
     {
         ASSERT_EQ(rawName.size(), fat::kShortNameLength);
         for (std::size_t i = 0; i < rawName.size(); ++i)
@@ -97,6 +94,7 @@ protected:
         writeLE(bytes, offset + fat::kDirectoryFileSizeOffset, size, 4);
     }
 
+protected:
     std::filesystem::path m_temporaryDirectory;
     std::filesystem::path m_imagePath;
 };
@@ -123,8 +121,8 @@ TEST_F(DirectoryReaderIntegrationTest, SkipsInvalidDirectoryEntryAndContinuesRea
     std::vector<std::uint8_t> bytes(static_cast<std::size_t>(layout.volumeSize), 0);
     for (const auto cluster : {2U, 3U, 4U, 5U})
     {
-        writeLE(bytes, layout.selectedFatOffset + cluster * fat::kFatEntrySize,
-                fat::kEndOfChainMax, 4);
+        writeLE(
+            bytes, layout.selectedFatOffset + cluster * fat::kFatEntrySize, fat::kEndOfChainMax, 4);
     }
     const auto directoryOffset = static_cast<std::size_t>(layout.dataOffset);
     writeFileEntry(bytes, directoryOffset, "FILE1   TXT", 3, 111);
@@ -132,8 +130,7 @@ TEST_F(DirectoryReaderIntegrationTest, SkipsInvalidDirectoryEntryAndContinuesRea
     // readable, and the slot is neither deleted, LFN, nor an End marker.
     const auto invalidOffset = directoryOffset + fat::kDirectoryEntrySize;
     writeFileEntry(bytes, invalidOffset, "BAD?    TXT", 4, 999);
-    writeFileEntry(bytes, directoryOffset + 2 * fat::kDirectoryEntrySize,
-                   "FILE2   TXT", 5, 222);
+    writeFileEntry(bytes, directoryOffset + 2 * fat::kDirectoryEntrySize, "FILE2   TXT", 5, 222);
 
     // The zero-filled fourth slot supplies the End marker.
     ASSERT_NO_FATAL_FAILURE(saveImage(bytes));
@@ -143,11 +140,10 @@ TEST_F(DirectoryReaderIntegrationTest, SkipsInvalidDirectoryEntryAndContinuesRea
         reader, std::make_unique<fat32tree::DirectoryEntryValidator>());
     ASSERT_EQ(parser.parse(invalidOffset).state, fat32tree::DirectoryEntryState::Invalid);
     ASSERT_EQ(parser.parse(directoryOffset + 3 * fat::kDirectoryEntrySize).state,
-              fat32tree::DirectoryEntryState::End);
+        fat32tree::DirectoryEntryState::End);
 
     fat32tree::FatTableReader fatTableReader(reader, layout);
-    auto directoryReader = std::make_unique<fat32tree::DirectoryReader>(
-        layout,
+    auto directoryReader = std::make_unique<fat32tree::DirectoryReader>(layout,
         std::make_unique<fat32tree::ClusterChainReader>(fatTableReader, layout),
         std::make_unique<fat32tree::DirectoryEntryParser>(
             reader, std::make_unique<fat32tree::DirectoryEntryValidator>()));
@@ -193,17 +189,15 @@ TEST_F(DirectoryReaderIntegrationTest, StopsDirectoryScanAtEndMarkerAndIgnoresFo
     std::vector<std::uint8_t> bytes(static_cast<std::size_t>(layout.volumeSize), 0);
     for (const auto cluster : {layout.rootCluster, kFile1FirstCluster, kFile2FirstCluster})
     {
-        writeLE(bytes, layout.selectedFatOffset + cluster * fat::kFatEntrySize,
-                fat::kEndOfChainMax, 4);
+        writeLE(
+            bytes, layout.selectedFatOffset + cluster * fat::kFatEntrySize, fat::kEndOfChainMax, 4);
     }
     const auto directoryOffset = static_cast<std::size_t>(layout.dataOffset);
     const auto endOffset = directoryOffset + fat::kDirectoryEntrySize;
     const auto followingEntryOffset = directoryOffset + 2 * fat::kDirectoryEntrySize;
-    writeFileEntry(bytes, directoryOffset, "FILE1   TXT",
-                   kFile1FirstCluster, kFile1SizeBytes);
+    writeFileEntry(bytes, directoryOffset, "FILE1   TXT", kFile1FirstCluster, kFile1SizeBytes);
     bytes.at(endOffset) = fat::kDirectoryEntryEndMarker;
-    writeFileEntry(bytes, followingEntryOffset, "FILE2   TXT",
-                   kFile2FirstCluster, kFile2SizeBytes);
+    writeFileEntry(bytes, followingEntryOffset, "FILE2   TXT", kFile2FirstCluster, kFile2SizeBytes);
     ASSERT_NO_FATAL_FAILURE(saveImage(bytes));
 
     fat32tree::BinaryReader reader(m_imagePath);
@@ -218,8 +212,7 @@ TEST_F(DirectoryReaderIntegrationTest, StopsDirectoryScanAtEndMarkerAndIgnoresFo
     ASSERT_EQ(followingEntry.entry.name, "FILE2.TXT");
 
     fat32tree::FatTableReader fatTableReader(reader, layout);
-    fat32tree::DirectoryReader directoryReader(
-        layout,
+    fat32tree::DirectoryReader directoryReader(layout,
         std::make_unique<fat32tree::ClusterChainReader>(fatTableReader, layout),
         std::make_unique<fat32tree::DirectoryEntryParser>(
             reader, std::make_unique<fat32tree::DirectoryEntryValidator>()));
@@ -260,17 +253,15 @@ TEST_F(DirectoryReaderIntegrationTest, PreservesReadableEntriesWhenDirectoryData
 
     const auto directoryOffset = static_cast<std::size_t>(layout.dataOffset);
     const auto truncatedOffset = directoryOffset + 2 * fat::kDirectoryEntrySize;
-    std::vector<std::uint8_t> bytes(
-        static_cast<std::size_t>(layout.volumeSize), 0);
+    std::vector<std::uint8_t> bytes(static_cast<std::size_t>(layout.volumeSize), 0);
     for (const auto cluster : {layout.rootCluster, kFile1FirstCluster, kFile2FirstCluster})
     {
-        writeLE(bytes, layout.selectedFatOffset + cluster * fat::kFatEntrySize,
-                fat::kEndOfChainMax, 4);
+        writeLE(
+            bytes, layout.selectedFatOffset + cluster * fat::kFatEntrySize, fat::kEndOfChainMax, 4);
     }
-    writeFileEntry(bytes, directoryOffset, "FILE1   TXT",
-                   kFile1FirstCluster, kFile1SizeBytes);
+    writeFileEntry(bytes, directoryOffset, "FILE1   TXT", kFile1FirstCluster, kFile1SizeBytes);
     writeFileEntry(bytes, directoryOffset + fat::kDirectoryEntrySize, "FILE2   TXT",
-                   kFile2FirstCluster, kFile2SizeBytes);
+        kFile2FirstCluster, kFile2SizeBytes);
     writeFileEntry(bytes, truncatedOffset, "FILE3   TXT", 5, 333);
     // Preserve the third slot's name and attributes, but truncate its cluster
     // and size fields. There is no End marker before EOF.
@@ -281,17 +272,16 @@ TEST_F(DirectoryReaderIntegrationTest, PreservesReadableEntriesWhenDirectoryData
     ASSERT_EQ(reader.size(), bytes.size());
     ASSERT_LT(reader.size(), layout.dataOffset + layout.clusterSize);
     ASSERT_EQ(reader.readU16LE(truncatedOffset + fat::kDirectoryFirstClusterHighOffset).status,
-              fat32tree::ReadStatus::OutOfBounds);
+        fat32tree::ReadStatus::OutOfBounds);
 
     fat32tree::DirectoryEntryParser parser(
         reader, std::make_unique<fat32tree::DirectoryEntryValidator>());
     ASSERT_EQ(parser.parse(truncatedOffset).state, fat32tree::DirectoryEntryState::Invalid);
     ASSERT_EQ(parser.parse(truncatedOffset + fat::kDirectoryEntrySize).state,
-              fat32tree::DirectoryEntryState::Invalid);
+        fat32tree::DirectoryEntryState::Invalid);
 
     fat32tree::FatTableReader fatTableReader(reader, layout);
-    fat32tree::DirectoryReader directoryReader(
-        layout,
+    fat32tree::DirectoryReader directoryReader(layout,
         std::make_unique<fat32tree::ClusterChainReader>(fatTableReader, layout),
         std::make_unique<fat32tree::DirectoryEntryParser>(
             reader, std::make_unique<fat32tree::DirectoryEntryValidator>()));

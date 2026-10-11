@@ -1,5 +1,9 @@
 #include "fat32tree/TreePrinter.h"
 
+#include "fat32tree/FileNode.h"
+
+#include <cstddef>
+#include <ostream>
 #include <stack>
 #include <utility>
 
@@ -68,7 +72,7 @@ void TreePrinter::pushChildren(
                 prefix,
                 childIndex == parent.children.size() - 1
             });
-    }    
+    }
 }
 
 } // namespace fat32tree

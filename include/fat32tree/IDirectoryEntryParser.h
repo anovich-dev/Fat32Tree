@@ -1,8 +1,8 @@
 #pragma once
 
-#include <cstdint>
+#include "fat32tree/DirectoryEntry.h"
 
-#include "DirectoryEntry.h"
+#include <cstdint>
 
 namespace fat32tree
 {

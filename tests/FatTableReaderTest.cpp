@@ -1,6 +1,6 @@
-#include <fat32tree/FatTableReader.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/BinaryReader.h"
+#include "fat32tree/Fat32VolumeLayout.h"
+#include "fat32tree/FatTableReader.h"
 
 #include <atomic>
 #include <chrono>
@@ -12,6 +12,8 @@
 #include <system_error>
 #include <vector>
 
+#include <gtest/gtest.h>
+
 namespace
 {
 
@@ -21,16 +23,13 @@ protected:
     void SetUp() override
     {
         static std::atomic<std::uint64_t> nextId{0};
-        const auto timestamp = std::chrono::high_resolution_clock::now()
-                                   .time_since_epoch()
-                                   .count();
+        const auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         const auto temporaryRoot = std::filesystem::temp_directory_path();
 
         for (int attempt = 0; attempt < 100; ++attempt)
         {
-            const auto directoryName =
-                "Fat32Tree-FatTableReader-" + std::to_string(timestamp) + "-" +
-                std::to_string(nextId.fetch_add(1));
+            const auto directoryName = "Fat32Tree-FatTableReader-" + std::to_string(timestamp) +
+                                       "-" + std::to_string(nextId.fetch_add(1));
             const auto candidate = temporaryRoot / directoryName;
             std::error_code error;
 
@@ -57,17 +56,14 @@ protected:
     {
         std::ofstream output(m_imagePath, std::ios::binary);
         ASSERT_TRUE(output.is_open());
-        output.write(
-            reinterpret_cast<const char*>(bytes.data()),
+        output.write(reinterpret_cast<const char*>(bytes.data()),
             static_cast<std::streamsize>(bytes.size()));
         output.close();
         ASSERT_TRUE(output.good());
     }
 
     static void writeU32LE(
-        std::vector<std::uint8_t>& bytes,
-        std::size_t offset,
-        std::uint32_t value)
+        std::vector<std::uint8_t>& bytes, std::size_t offset, std::uint32_t value)
     {
         ASSERT_LE(offset + 4, bytes.size());
         bytes[offset] = static_cast<std::uint8_t>(value & 0xFFU);
@@ -85,6 +81,7 @@ protected:
         return layout;
     }
 
+protected:
     std::filesystem::path m_temporaryDirectory;
     std::filesystem::path m_imagePath;
 };
@@ -186,8 +183,7 @@ TEST_F(FatTableReaderTest, EntryPastFatEndThrows)
     catch (const fat32tree::FatTableReadException& exception)
     {
         EXPECT_NE(
-            std::string(exception.what()).find("outside the selected FAT"),
-            std::string::npos);
+            std::string(exception.what()).find("outside the selected FAT"), std::string::npos);
     }
 }
 
@@ -210,9 +206,7 @@ TEST_F(FatTableReaderTest, TruncatedImageThrowsWithReadStatus)
     }
     catch (const fat32tree::FatTableReadException& exception)
     {
-        EXPECT_NE(
-            std::string(exception.what()).find("OutOfBounds"),
-            std::string::npos);
+        EXPECT_NE(std::string(exception.what()).find("OutOfBounds"), std::string::npos);
     }
 }
 

@@ -1,11 +1,11 @@
 #pragma once
 
+#include "fat32tree/DirectoryEntry.h"
+
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-
-#include "fat32tree/DirectoryEntry.h"
 
 namespace fat32tree
 {

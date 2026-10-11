@@ -1,24 +1,24 @@
-#include <fat32tree/DirectoryReadResult.h>
-#include <fat32tree/DirectoryReader.h>
-#include <fat32tree/Fat32Constants.h>
-#include <fat32tree/IClusterChainReader.h>
-#include <fat32tree/IDirectoryEntryParser.h>
+#include "Mocks/ClusterChainReaderMock.h"
+#include "Mocks/DirectoryEntryParserMock.h"
+#include "fat32tree/DirectoryReadResult.h"
+#include "fat32tree/DirectoryReader.h"
+#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/Fat32VolumeLayout.h"
+#include "fat32tree/IClusterChainReader.h"
+#include "fat32tree/IDirectoryEntryParser.h"
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-#include "Mocks/ClusterChainReaderMock.h"
-#include "Mocks/DirectoryEntryParserMock.h"
-
-#include <cstdint>
-#include <memory>
-#include <utility>
-#include <vector>
-
 namespace
 {
 
-using ::testing::_;
 using ::testing::Return;
 using ChainReaderMock = ::testing::StrictMock<fat32tree::test::ClusterChainReaderMock>;
 using EntryParserMock = ::testing::StrictMock<fat32tree::test::DirectoryEntryParserMock>;
@@ -39,13 +39,10 @@ protected:
         std::unique_ptr<fat32tree::IClusterChainReader> chainReader = std::move(chainMock);
         std::unique_ptr<fat32tree::IDirectoryEntryParser> entryParser = std::move(parserMock);
         m_directoryReader = std::make_unique<fat32tree::DirectoryReader>(
-            m_layout,
-            std::move(chainReader),
-            std::move(entryParser));
+            m_layout, std::move(chainReader), std::move(entryParser));
     }
 
-    void expectChain(
-        std::vector<std::uint32_t> clusters,
+    void expectChain(std::vector<std::uint32_t> clusters,
         fat32tree::ClusterChainStatus status = fat32tree::ClusterChainStatus::Complete,
         std::uint32_t firstCluster = 5)
     {
@@ -53,20 +50,16 @@ protected:
             .WillOnce(Return(fat32tree::ClusterChainResult{std::move(clusters), status}));
     }
 
-    void expectParsed(
-        std::uint64_t offset,
-        fat32tree::DirectoryEntryState state,
+    void expectParsed(std::uint64_t offset, fat32tree::DirectoryEntryState state,
         fat32tree::DirectoryEntry entry = {})
     {
         EXPECT_CALL(*m_entryParserMock, parse(offset))
             .WillOnce(Return(fat32tree::ParsedDirectoryEntry{state, std::move(entry)}));
     }
 
-    static fat32tree::DirectoryEntry makeEntry(
-        std::string name,
+    static fat32tree::DirectoryEntry makeEntry(std::string name,
         fat32tree::DirectoryEntryType type = fat32tree::DirectoryEntryType::File,
-        std::uint32_t firstCluster = 0,
-        std::uint32_t fileSize = 0)
+        std::uint32_t firstCluster = 0, std::uint32_t fileSize = 0)
     {
         return {std::move(name), type, firstCluster, fileSize};
     }
@@ -76,6 +69,7 @@ protected:
         return 1000 + static_cast<std::uint64_t>(cluster - 2) * 64;
     }
 
+protected:
     fat32tree::Fat32VolumeLayout m_layout;
     ChainReaderMock* m_chainReaderMock = nullptr;
     EntryParserMock* m_entryParserMock = nullptr;
@@ -86,9 +80,9 @@ TEST_F(DirectoryReaderTest, ReadsNormalEntriesFromSingleCluster)
 {
     expectChain({5});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FIRST.TXT", fat32tree::DirectoryEntryType::File, 7, 12));
+        makeEntry("FIRST.TXT", fat32tree::DirectoryEntryType::File, 7, 12));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("SECOND", fat32tree::DirectoryEntryType::Directory, 8));
+        makeEntry("SECOND", fat32tree::DirectoryEntryType::Directory, 8));
 
     const auto result = m_directoryReader->readDirectory(5);
 
@@ -102,9 +96,9 @@ TEST_F(DirectoryReaderTest, PreservesDirectoryAndFileEntries)
 {
     expectChain({5});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FILE.BIN", fat32tree::DirectoryEntryType::File, 21, 500));
+        makeEntry("FILE.BIN", fat32tree::DirectoryEntryType::File, 21, 500));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("SUBDIR", fat32tree::DirectoryEntryType::Directory, 40, 0));
+        makeEntry("SUBDIR", fat32tree::DirectoryEntryType::Directory, 40, 0));
 
     const auto result = m_directoryReader->readDirectory(5);
 
@@ -133,8 +127,8 @@ TEST_F(DirectoryReaderTest, SkipsDeletedEntries)
 {
     expectChain({5});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Deleted);
-    expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("KEEP.TXT"));
+    expectParsed(
+        offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal, makeEntry("KEEP.TXT"));
 
     const auto result = m_directoryReader->readDirectory(5);
 
@@ -146,8 +140,8 @@ TEST_F(DirectoryReaderTest, SkipsLongFileNameEntries)
 {
     expectChain({5});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::LongFileName);
-    expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("KEEP.TXT"));
+    expectParsed(
+        offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal, makeEntry("KEEP.TXT"));
 
     const auto result = m_directoryReader->readDirectory(5);
 
@@ -158,11 +152,9 @@ TEST_F(DirectoryReaderTest, SkipsLongFileNameEntries)
 TEST_F(DirectoryReaderTest, SkipsInvalidEntriesAndContinuesReading)
 {
     expectChain({5, 6});
-    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FILE1"));
+    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal, makeEntry("FILE1"));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Invalid);
-    expectParsed(offsetForCluster(6), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FILE2"));
+    expectParsed(offsetForCluster(6), fat32tree::DirectoryEntryState::Normal, makeEntry("FILE2"));
     expectParsed(offsetForCluster(6) + 32, fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readDirectory(5);
@@ -176,9 +168,9 @@ TEST_F(DirectoryReaderTest, SkipsDotEntry)
 {
     expectChain({5});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry(".", fat32tree::DirectoryEntryType::Directory));
+        makeEntry(".", fat32tree::DirectoryEntryType::Directory));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("CHILD", fat32tree::DirectoryEntryType::Directory));
+        makeEntry("CHILD", fat32tree::DirectoryEntryType::Directory));
 
     const auto result = m_directoryReader->readDirectory(5);
 
@@ -190,9 +182,9 @@ TEST_F(DirectoryReaderTest, SkipsDotDotEntry)
 {
     expectChain({5});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("..", fat32tree::DirectoryEntryType::Directory));
+        makeEntry("..", fat32tree::DirectoryEntryType::Directory));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("CHILD", fat32tree::DirectoryEntryType::Directory));
+        makeEntry("CHILD", fat32tree::DirectoryEntryType::Directory));
 
     const auto result = m_directoryReader->readDirectory(5);
 
@@ -204,9 +196,9 @@ TEST_F(DirectoryReaderTest, SkipsVolumeLabelForRegularDirectory)
 {
     expectChain({5});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::VolumeLabel,
-                 makeEntry("MY_USB", fat32tree::DirectoryEntryType::Directory));
-    expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("CHILD"));
+        makeEntry("MY_USB", fat32tree::DirectoryEntryType::Directory));
+    expectParsed(
+        offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal, makeEntry("CHILD"));
 
     const auto result = m_directoryReader->readDirectory(5);
 
@@ -218,9 +210,9 @@ TEST_F(DirectoryReaderTest, PreservesVolumeLabelWhenReadingRootDirectory)
 {
     expectChain({5});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::VolumeLabel,
-                 makeEntry("MY_USB", fat32tree::DirectoryEntryType::Directory));
-    expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("README.TXT"));
+        makeEntry("MY_USB", fat32tree::DirectoryEntryType::Directory));
+    expectParsed(
+        offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Normal, makeEntry("README.TXT"));
 
     const auto result = m_directoryReader->readRootDirectory(5);
 
@@ -233,8 +225,8 @@ TEST_F(DirectoryReaderTest, PreservesVolumeLabelWhenReadingRootDirectory)
 TEST_F(DirectoryReaderTest, ReturnsEmptyVolumeLabelWhenRootHasNoVolumeLabel)
 {
     expectChain({5});
-    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("README.TXT"));
+    expectParsed(
+        offsetForCluster(5), fat32tree::DirectoryEntryState::Normal, makeEntry("README.TXT"));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readRootDirectory(5);
@@ -247,9 +239,9 @@ TEST_F(DirectoryReaderTest, PreservesFirstVolumeLabelWhenMultipleLabelsAreFound)
 {
     expectChain({5, 6});
     expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::VolumeLabel,
-                 makeEntry("FIRST", fat32tree::DirectoryEntryType::Directory));
+        makeEntry("FIRST", fat32tree::DirectoryEntryType::Directory));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::VolumeLabel,
-                 makeEntry("SECOND", fat32tree::DirectoryEntryType::Directory));
+        makeEntry("SECOND", fat32tree::DirectoryEntryType::Directory));
     expectParsed(offsetForCluster(6), fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readRootDirectory(5);
@@ -261,8 +253,8 @@ TEST_F(DirectoryReaderTest, PreservesFirstVolumeLabelWhenMultipleLabelsAreFound)
 TEST_F(DirectoryReaderTest, StopsReadingAfterEndEntry)
 {
     expectChain({5});
-    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("BEFORE_END"));
+    expectParsed(
+        offsetForCluster(5), fat32tree::DirectoryEntryState::Normal, makeEntry("BEFORE_END"));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readDirectory(5);
@@ -274,8 +266,8 @@ TEST_F(DirectoryReaderTest, StopsReadingAfterEndEntry)
 TEST_F(DirectoryReaderTest, DoesNotReadFollowingClustersAfterEndEntry)
 {
     expectChain({5, 9});
-    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("BEFORE_END"));
+    expectParsed(
+        offsetForCluster(5), fat32tree::DirectoryEntryState::Normal, makeEntry("BEFORE_END"));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readDirectory(5);
@@ -287,11 +279,9 @@ TEST_F(DirectoryReaderTest, DoesNotReadFollowingClustersAfterEndEntry)
 TEST_F(DirectoryReaderTest, ReadsEntriesAcrossMultipleClusters)
 {
     expectChain({5, 6});
-    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FILE1"));
+    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal, makeEntry("FILE1"));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Deleted);
-    expectParsed(offsetForCluster(6), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FILE2"));
+    expectParsed(offsetForCluster(6), fat32tree::DirectoryEntryState::Normal, makeEntry("FILE2"));
     expectParsed(offsetForCluster(6) + 32, fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readDirectory(5);
@@ -304,14 +294,11 @@ TEST_F(DirectoryReaderTest, ReadsEntriesAcrossMultipleClusters)
 TEST_F(DirectoryReaderTest, ReadsFragmentedDirectoryChainInFatOrder)
 {
     expectChain({20, 900, 31});
-    expectParsed(offsetForCluster(20), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FILE1"));
+    expectParsed(offsetForCluster(20), fat32tree::DirectoryEntryState::Normal, makeEntry("FILE1"));
     expectParsed(offsetForCluster(20) + 32, fat32tree::DirectoryEntryState::Deleted);
-    expectParsed(offsetForCluster(900), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FILE2"));
+    expectParsed(offsetForCluster(900), fat32tree::DirectoryEntryState::Normal, makeEntry("FILE2"));
     expectParsed(offsetForCluster(900) + 32, fat32tree::DirectoryEntryState::Deleted);
-    expectParsed(offsetForCluster(31), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("FILE3"));
+    expectParsed(offsetForCluster(31), fat32tree::DirectoryEntryState::Normal, makeEntry("FILE3"));
     expectParsed(offsetForCluster(31) + 32, fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readDirectory(5);
@@ -336,11 +323,11 @@ TEST_F(DirectoryReaderTest, CalculatesEntryOffsetsFromClusterGeometry)
 TEST_F(DirectoryReaderTest, PreservesEntriesFromPartialClusterChain)
 {
     expectChain({5, 9}, fat32tree::ClusterChainStatus::BadCluster);
-    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("RECOVERED1"));
+    expectParsed(
+        offsetForCluster(5), fat32tree::DirectoryEntryState::Normal, makeEntry("RECOVERED1"));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Deleted);
-    expectParsed(offsetForCluster(9), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("RECOVERED2"));
+    expectParsed(
+        offsetForCluster(9), fat32tree::DirectoryEntryState::Normal, makeEntry("RECOVERED2"));
     expectParsed(offsetForCluster(9) + 32, fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readDirectory(5);
@@ -354,14 +341,14 @@ TEST_F(DirectoryReaderTest, PreservesEntriesFromPartialClusterChain)
 TEST_F(DirectoryReaderTest, PreservesEntriesWhenClusterChainCycleWasDetected)
 {
     expectChain({5, 9, 14}, fat32tree::ClusterChainStatus::CycleDetected);
-    expectParsed(offsetForCluster(5), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("RECOVERED1"));
+    expectParsed(
+        offsetForCluster(5), fat32tree::DirectoryEntryState::Normal, makeEntry("RECOVERED1"));
     expectParsed(offsetForCluster(5) + 32, fat32tree::DirectoryEntryState::Deleted);
-    expectParsed(offsetForCluster(9), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("RECOVERED2"));
+    expectParsed(
+        offsetForCluster(9), fat32tree::DirectoryEntryState::Normal, makeEntry("RECOVERED2"));
     expectParsed(offsetForCluster(9) + 32, fat32tree::DirectoryEntryState::Deleted);
-    expectParsed(offsetForCluster(14), fat32tree::DirectoryEntryState::Normal,
-                 makeEntry("RECOVERED3"));
+    expectParsed(
+        offsetForCluster(14), fat32tree::DirectoryEntryState::Normal, makeEntry("RECOVERED3"));
     expectParsed(offsetForCluster(14) + 32, fat32tree::DirectoryEntryState::End);
 
     const auto result = m_directoryReader->readDirectory(5);

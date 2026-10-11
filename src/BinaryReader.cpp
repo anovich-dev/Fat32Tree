@@ -1,16 +1,15 @@
-#include <fat32tree/BinaryReader.h>
+#include "fat32tree/BinaryReader.h"
 
+#include <array>
 #include <cstddef>
 #include <ios>
 #include <limits>
-#include <array>
 #include <span>
 
 namespace fat32tree
 {
 
-BinaryReader::BinaryReader(const std::filesystem::path& path)
-    :  m_stream(path, std::ios::binary)
+BinaryReader::BinaryReader(const std::filesystem::path& path) : m_stream(path, std::ios::binary)
 {
     if (!m_stream.is_open())
     {
@@ -33,11 +32,9 @@ BinaryReader::BinaryReader(const std::filesystem::path& path)
 
     m_size = static_cast<std::uint64_t>(endPosition);
 
-    if (m_size >
-    static_cast<std::uint64_t>(std::numeric_limits<std::streamoff>::max()))
+    if (m_size > static_cast<std::uint64_t>(std::numeric_limits<std::streamoff>::max()))
     {
-        throw BinaryReaderException(
-            "Image file is too large for stream addressing");
+        throw BinaryReaderException("Image file is too large for stream addressing");
     }
 
     m_stream.seekg(0, std::ios::beg);
@@ -64,9 +61,7 @@ ReadResult<std::uint8_t> BinaryReader::readU8(std::uint64_t offset)
         return {status, 0};
     }
 
-    return {
-        ReadStatus::Success,
-        std::to_integer<std::uint8_t>(byte)};
+    return {ReadStatus::Success, std::to_integer<std::uint8_t>(byte)};
 }
 
 ReadResult<std::uint16_t> BinaryReader::readU16LE(std::uint64_t offset)
@@ -85,9 +80,7 @@ ReadResult<std::uint16_t> BinaryReader::readU16LE(std::uint64_t offset)
 
     const std::uint16_t value = lowByte | (highByte << 8);
 
-    return {
-        ReadStatus::Success,
-        value};
+    return {ReadStatus::Success, value};
 }
 
 ReadResult<std::uint32_t> BinaryReader::readU32LE(std::uint64_t offset)
@@ -106,34 +99,27 @@ ReadResult<std::uint32_t> BinaryReader::readU32LE(std::uint64_t offset)
                                 (std::to_integer<std::uint32_t>(bytes[2]) << 16) |
                                 (std::to_integer<std::uint32_t>(bytes[3]) << 24);
 
-    return {
-        ReadStatus::Success,
-        value};
+    return {ReadStatus::Success, value};
 }
 
 ReadStatus BinaryReader::readBytes(std::uint64_t offset, std::span<std::uint8_t> buffer)
 {
-    return readExact(
-        offset,
-        std::as_writable_bytes(buffer));
+    return readExact(offset, std::as_writable_bytes(buffer));
 }
 
 ReadStatus BinaryReader::readExact(std::uint64_t offset, std::span<std::byte> buffer)
 {
-    // Validate that the requested range is inside the image.
     if (offset > m_size || buffer.size() > m_size - offset)
     {
         return ReadStatus::OutOfBounds;
     }
 
-    // An empty read is a valid no-op operation.
     if (buffer.empty())
     {
         return ReadStatus::Success;
     }
 
-    if (buffer.size() >
-        static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max()))
+    if (buffer.size() > static_cast<std::size_t>(std::numeric_limits<std::streamsize>::max()))
     {
         return ReadStatus::InvalidReadSize;
     }

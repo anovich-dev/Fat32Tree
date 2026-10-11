@@ -1,9 +1,10 @@
 #pragma once
 
-#include "IDirectoryReader.h"
+#include "fat32tree/IDirectoryReader.h"
 
-#include "DirectoryReadResult.h"
-#include "Fat32VolumeLayout.h"
+#include "fat32tree/DirectoryReadResult.h"
+#include "fat32tree/IClusterChainReader.h"
+#include "fat32tree/IDirectoryEntryParser.h"
 
 #include <cstdint>
 #include <memory>
@@ -11,14 +12,12 @@
 namespace fat32tree
 {
 
-class IClusterChainReader;
-class IDirectoryEntryParser;
+struct Fat32VolumeLayout;
 
 class DirectoryReader final : public IDirectoryReader
 {
 public:
-    DirectoryReader(
-        const Fat32VolumeLayout& layout,
+    DirectoryReader(const Fat32VolumeLayout& layout,
         std::unique_ptr<IClusterChainReader> chainReader,
         std::unique_ptr<IDirectoryEntryParser> entryParser);
 

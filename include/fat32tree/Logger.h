@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ctime>
 #include <filesystem>
 #include <fstream>
 #include <mutex>
@@ -24,9 +25,7 @@ private:
     static Logger& instance();
 
     void initializeImpl();
-    void write(
-        const std::string& level,
-        const std::string& message);
+    void write(const std::string& level, const std::string& message);
 
     std::filesystem::path getDesktopPath() const;
     std::filesystem::path generateLogFilePath() const;

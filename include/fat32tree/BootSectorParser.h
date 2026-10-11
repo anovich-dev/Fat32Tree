@@ -1,6 +1,5 @@
 #pragma once
 
-#include "fat32tree/BinaryReader.h"
 #include "fat32tree/Fat32Bpb.h"
 #include "fat32tree/ReadResult.h"
 
@@ -10,11 +9,12 @@
 namespace fat32tree
 {
 
+class BinaryReader;
+
 class BootSectorParseException : public std::runtime_error
 {
 public:
-    explicit BootSectorParseException(const std::string& message)
-        : std::runtime_error(message)
+    explicit BootSectorParseException(const std::string& message) : std::runtime_error(message)
     {
     }
 };
@@ -28,22 +28,18 @@ public:
 
 private:
     template <SupportedReadType T>
-    T requireRead(
-        ReadResult<T> result,
-        const char* fieldName)
+    T requireRead(ReadResult<T> result, const char* fieldName)
     {
         if (result.status != ReadStatus::Success)
         {
-            throw BootSectorParseException(
-                std::string("Failed to read required field ") +
-                fieldName +
-                ": " +
-                readStatusToString(result.status));
+            throw BootSectorParseException(std::string("Failed to read required field ") +
+                                           fieldName + ": " + readStatusToString(result.status));
         }
 
         return result.value;
     }
 
+private:
     BinaryReader& m_reader;
 };
 

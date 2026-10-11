@@ -1,23 +1,22 @@
 #pragma once
 
-#include <concepts>
+#include "fat32tree/ReadResult.h"
+
+#include <cstddef>
 #include <cstdint>
-#include <stdexcept>
-#include <string>
 #include <filesystem>
 #include <fstream>
-#include <cstddef>
 #include <span>
-
-#include "ReadResult.h"
+#include <stdexcept>
+#include <string>
 
 namespace fat32tree
 {
+
 class BinaryReaderException : public std::runtime_error
 {
 public:
-    explicit BinaryReaderException(const std::string& message)
-        : std::runtime_error(message)
+    explicit BinaryReaderException(const std::string& message) : std::runtime_error(message)
     {
     }
 };
@@ -25,7 +24,7 @@ public:
 class BinaryReader
 {
 public:
-    explicit BinaryReader(const std::filesystem::path &path);
+    explicit BinaryReader(const std::filesystem::path& path);
 
     std::uint64_t size() const noexcept;
     ReadResult<std::uint8_t> readU8(std::uint64_t offset);
@@ -35,9 +34,7 @@ public:
     ReadStatus readBytes(std::uint64_t offset, std::span<std::uint8_t> buffer);
 
 private:
-    ReadStatus readExact(
-        std::uint64_t offset,
-        std::span<std::byte> buffer);
+    ReadStatus readExact(std::uint64_t offset, std::span<std::byte> buffer);
 
 private:
     std::ifstream m_stream;

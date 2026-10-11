@@ -4,8 +4,10 @@
 #include "fat32tree/DirectoryEntryParser.h"
 #include "fat32tree/DirectoryEntryValidator.h"
 #include "fat32tree/DirectoryReader.h"
+#include "fat32tree/Fat32VolumeLayout.h"
 #include "fat32tree/Fat32VolumeValidator.h"
 #include "fat32tree/FatTableReader.h"
+#include "fat32tree/FileNode.h"
 #include "fat32tree/FileTreeBuilder.h"
 #include "fat32tree/Logger.h"
 #include "fat32tree/TreePrinter.h"
@@ -15,6 +17,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <utility>
 
 int main(int argc, char* argv[])
 {
@@ -68,16 +71,11 @@ int main(int argc, char* argv[])
 
         fat32tree::Fat32VolumeValidator volumeValidator;
         const fat32tree::Fat32VolumeLayout layout =
-            volumeValidator.validate(
-                bpb,
-                binaryReader.size());
+            volumeValidator.validate(bpb, binaryReader.size());
         fat32tree::Logger::info("FAT32 volume successfully validated");
 
         // 2. FAT
-        fat32tree::FatTableReader fatTableReader{
-            binaryReader,
-            layout
-        };
+        fat32tree::FatTableReader fatTableReader{binaryReader, layout};
 
         auto clusterChainReader =
             std::make_unique<fat32tree::ClusterChainReader>(
@@ -85,8 +83,7 @@ int main(int argc, char* argv[])
                 layout);
 
         // 3. Directory
-        auto directoryEntryValidator =
-            std::make_unique<fat32tree::DirectoryEntryValidator>();
+        auto directoryEntryValidator = std::make_unique<fat32tree::DirectoryEntryValidator>();
 
         auto directoryEntryParser =
             std::make_unique<fat32tree::DirectoryEntryParser>(

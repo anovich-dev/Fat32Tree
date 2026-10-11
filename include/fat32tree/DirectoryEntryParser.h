@@ -1,18 +1,20 @@
 #pragma once
 
-#include "IDirectoryEntryParser.h"
+#include "fat32tree/IDirectoryEntryParser.h"
 
-#include "DirectoryEntry.h"
-#include "BinaryReader.h"
-#include "Fat32Constants.h"
+#include "fat32tree/DirectoryEntry.h"
+#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/IDirectoryEntryValidator.h"
 
 #include <cstdint>
+#include <memory>
 #include <span>
+#include <string>
 
 namespace fat32tree
 {
 
-class IDirectoryEntryValidator;
+class BinaryReader;
 
 class DirectoryEntryParser final : public IDirectoryEntryParser
 {
@@ -22,10 +24,11 @@ public:
     ParsedDirectoryEntry parse(std::uint64_t entryOffset) const override;
 
 private:
-    
-    std::string parseVolumeLabel(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const;
+    std::string parseVolumeLabel(
+        std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const;
 
-    std::string parseShortName(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const;
+    std::string parseShortName(
+        std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const;
 
     std::string parseNamePart(std::span<const std::uint8_t> bytes) const;
 

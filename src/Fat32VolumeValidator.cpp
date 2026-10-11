@@ -1,6 +1,7 @@
 #include "fat32tree/Fat32VolumeValidator.h"
 
 #include "fat32tree/Fat32Constants.h"
+#include "fat32tree/Fat32VolumeLayout.h"
 
 #include <limits>
 #include <string>
@@ -14,109 +15,77 @@ Fat32VolumeLayout Fat32VolumeValidator::validate(const Fat32Bpb& bpb, std::uint6
 
     validateFat32Format(bpb);
 
-    validateSectorAndClusterGeometry(
-        bpb,
-        layout);
+    validateSectorAndClusterGeometry(bpb, layout);
 
-    validateVolumeGeometry(
-        bpb,
-        imageSize,
-        layout);
+    validateVolumeGeometry(bpb, imageSize, layout);
 
-    validateFatGeometry(
-        bpb,
-        layout);
+    validateFatGeometry(bpb, layout);
 
-    validateDataRegionGeometry(
-        bpb,
-        layout);
+    validateDataRegionGeometry(bpb, layout);
 
-    validateRootDirectoryGeometry(
-        bpb,
-        layout);
+    validateRootDirectoryGeometry(bpb, layout);
 
     return layout;
 }
 
 void Fat32VolumeValidator::validateFat32Format(const Fat32Bpb& bpb) const
 {
-    if (bpb.signatureFirstByte !=
-            fat32::kBootSignatureFirstByte ||
-        bpb.signatureSecondByte !=
-            fat32::kBootSignatureSecondByte)
+    if (bpb.signatureFirstByte != fat32::kBootSignatureFirstByte ||
+        bpb.signatureSecondByte != fat32::kBootSignatureSecondByte)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid ") +
-            fat32::kBootSignatureFieldName +
-            ": expected 0x55AA");
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid ") + fat32::kBootSignatureFieldName + ": expected 0x55AA");
     }
 
     if (bpb.rootEntryCount != 0)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid FAT32 ") +
-            fat32::kRootEntryCountFieldName +
-            ": expected 0");
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid FAT32 ") + fat32::kRootEntryCountFieldName + ": expected 0");
     }
 
     if (bpb.totalSectors16 != 0)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid FAT32 ") +
-            fat32::kTotalSectors16FieldName +
-            ": expected 0");
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid FAT32 ") + fat32::kTotalSectors16FieldName + ": expected 0");
     }
 
     if (bpb.fatSize16 != 0)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid FAT32 ") +
-            fat32::kFatSize16FieldName +
-            ": expected 0");
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid FAT32 ") + fat32::kFatSize16FieldName + ": expected 0");
     }
 
     if (bpb.fileSystemVersion != fat32::kFat32Version)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Unsupported,
-            std::string("Unsupported FAT32 ") +
-            fat32::kFileSystemVersionFieldName + ": " +
-            std::to_string(bpb.fileSystemVersion));
+        throw Fat32ValidationException(ValidationErrorCategory::Unsupported,
+            std::string("Unsupported FAT32 ") + fat32::kFileSystemVersionFieldName + ": " +
+                std::to_string(bpb.fileSystemVersion));
     }
 }
 
-void Fat32VolumeValidator::validateSectorAndClusterGeometry(const Fat32Bpb& bpb, Fat32VolumeLayout& layout) const
+void Fat32VolumeValidator::validateSectorAndClusterGeometry(
+    const Fat32Bpb& bpb, Fat32VolumeLayout& layout) const
 {
     switch (bpb.bytesPerSector)
     {
-        case 512:
-        case 1024:
-        case 2048:
-        case 4096:
-            break;
+    case 512:
+    case 1024:
+    case 2048:
+    case 4096:
+        break;
 
-        default:
-            throw Fat32ValidationException(
-                ValidationErrorCategory::Malformed,
-                std::string("Invalid ") +
-                fat32::kBytesPerSectorFieldName + ": " +
+    default:
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid ") + fat32::kBytesPerSectorFieldName + ": " +
                 std::to_string(bpb.bytesPerSector));
     }
 
-    if (bpb.sectorsPerCluster == 0 ||
-        bpb.sectorsPerCluster > 128 ||
-        (bpb.sectorsPerCluster &
-            (bpb.sectorsPerCluster - 1)) != 0)
+    if (bpb.sectorsPerCluster == 0 || bpb.sectorsPerCluster > 128 ||
+        (bpb.sectorsPerCluster & (bpb.sectorsPerCluster - 1)) != 0)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid ") +
-            fat32::kSectorsPerClusterFieldName + ": " +
-            std::to_string(bpb.sectorsPerCluster));
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid ") + fat32::kSectorsPerClusterFieldName + ": " +
+                std::to_string(bpb.sectorsPerCluster));
     }
 
     layout.bytesPerSector = bpb.bytesPerSector;
@@ -135,10 +104,8 @@ void Fat32VolumeValidator::validateVolumeGeometry(
 {
     if (bpb.totalSectors32 == 0)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid ") +
-            fat32::kTotalSectors32FieldName + ": 0");
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid ") + fat32::kTotalSectors32FieldName + ": 0");
     }
 
     layout.totalSectors = bpb.totalSectors32;
@@ -150,8 +117,7 @@ void Fat32VolumeValidator::validateVolumeGeometry(
     if (layout.volumeSize > imageSize)
     {
         throw Fat32ValidationException(
-            ValidationErrorCategory::Corrupted,
-            "Declared volume extends beyond the image size");
+            ValidationErrorCategory::Corrupted, "Declared volume extends beyond the image size");
     }
 }
 
@@ -159,26 +125,20 @@ void Fat32VolumeValidator::validateFatGeometry(const Fat32Bpb& bpb, Fat32VolumeL
 {
     if (bpb.reservedSectorCount == 0)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid ") +
-            fat32::kReservedSectorCountFieldName + ": 0");
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid ") + fat32::kReservedSectorCountFieldName + ": 0");
     }
 
     if (bpb.fatCount == 0)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid ") +
-            fat32::kFatCountFieldName + ": 0");
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid ") + fat32::kFatCountFieldName + ": 0");
     }
 
     if (bpb.fatSize32 == 0)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid ") +
-            fat32::kFatSize32FieldName + ": 0");
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid ") + fat32::kFatSize32FieldName + ": 0");
     }
 
     layout.fatCount = bpb.fatCount;
@@ -194,14 +154,11 @@ void Fat32VolumeValidator::validateFatGeometry(const Fat32Bpb& bpb, Fat32VolumeL
         layout.bytesPerSector,
         "FAT offset");
 
-    const bool mirroringDisabled =
-        (bpb.extendedFlags &
-            fat32::kFatMirroringDisabledMask) != 0;
+    const bool mirroringDisabled = (bpb.extendedFlags & fat32::kFatMirroringDisabledMask) != 0;
 
     if (mirroringDisabled)
     {
-        layout.selectedFatIndex =
-            bpb.extendedFlags & fat32::kActiveFatIndexMask;
+        layout.selectedFatIndex = bpb.extendedFlags & fat32::kActiveFatIndexMask;
     }
     else
     {
@@ -211,8 +168,7 @@ void Fat32VolumeValidator::validateFatGeometry(const Fat32Bpb& bpb, Fat32VolumeL
     if (layout.selectedFatIndex >= layout.fatCount)
     {
         throw Fat32ValidationException(
-            ValidationErrorCategory::Corrupted,
-            "Active FAT index is outside available FATs");
+            ValidationErrorCategory::Corrupted, "Active FAT index is outside available FATs");
     }
 
     const std::uint64_t selectedFatRelativeOffset =
@@ -228,7 +184,8 @@ void Fat32VolumeValidator::validateFatGeometry(const Fat32Bpb& bpb, Fat32VolumeL
             "selected FAT offset");
 }
 
-void Fat32VolumeValidator::validateDataRegionGeometry(const Fat32Bpb& bpb, Fat32VolumeLayout& layout) const
+void Fat32VolumeValidator::validateDataRegionGeometry(
+    const Fat32Bpb& bpb, Fat32VolumeLayout& layout) const
 {
     const std::uint64_t fatRegionSectors =
         checkedMultiply(
@@ -242,17 +199,13 @@ void Fat32VolumeValidator::validateDataRegionGeometry(const Fat32Bpb& bpb, Fat32
             fatRegionSectors,
             "first data sector");
 
-    if (layout.firstDataSector >=
-        layout.totalSectors)
+    if (layout.firstDataSector >= layout.totalSectors)
     {
         throw Fat32ValidationException(
-            ValidationErrorCategory::Corrupted,
-            "Data region starts outside the volume");
+            ValidationErrorCategory::Corrupted, "Data region starts outside the volume");
     }
 
-    layout.dataSectors =
-        layout.totalSectors -
-        layout.firstDataSector;
+    layout.dataSectors = layout.totalSectors - layout.firstDataSector;
 
     layout.dataOffset =
         checkedMultiply(
@@ -260,39 +213,31 @@ void Fat32VolumeValidator::validateDataRegionGeometry(const Fat32Bpb& bpb, Fat32
             layout.bytesPerSector,
             "data region offset");
 
-    layout.clusterCount =
-        layout.dataSectors /
-        layout.sectorsPerCluster;
+    layout.clusterCount = layout.dataSectors / layout.sectorsPerCluster;
 
-    if (layout.clusterCount <
-        fat32::kMinFat32ClusterCount)
+    if (layout.clusterCount < fat32::kMinFat32ClusterCount)
     {
         throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            "Volume does not contain a FAT32 cluster count");
+            ValidationErrorCategory::Malformed, "Volume does not contain a FAT32 cluster count");
     }
 }
 
-void Fat32VolumeValidator::validateRootDirectoryGeometry(const Fat32Bpb& bpb, Fat32VolumeLayout& layout) const
+void Fat32VolumeValidator::validateRootDirectoryGeometry(
+    const Fat32Bpb& bpb, Fat32VolumeLayout& layout) const
 {
     if (bpb.rootCluster < 2)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Malformed,
-            std::string("Invalid ") +
-            fat32::kRootClusterFieldName + ": " +
-            std::to_string(bpb.rootCluster));
+        throw Fat32ValidationException(ValidationErrorCategory::Malformed,
+            std::string("Invalid ") + fat32::kRootClusterFieldName + ": " +
+                std::to_string(bpb.rootCluster));
     }
 
-    const std::uint64_t rootClusterIndex =
-        static_cast<std::uint64_t>(
-            bpb.rootCluster - 2);
+    const std::uint64_t rootClusterIndex = static_cast<std::uint64_t>(bpb.rootCluster - 2);
 
     if (rootClusterIndex >= layout.clusterCount)
     {
         throw Fat32ValidationException(
-            ValidationErrorCategory::Corrupted,
-            "Root cluster is outside the data cluster range");
+            ValidationErrorCategory::Corrupted, "Root cluster is outside the data cluster range");
     }
 
     layout.rootCluster = bpb.rootCluster;
@@ -303,16 +248,10 @@ std::uint64_t Fat32VolumeValidator::checkedMultiply(
     std::uint64_t rhs,
     const char* operationName) const
 {
-    if (lhs != 0 &&
-        rhs >
-            std::numeric_limits<std::uint64_t>::max() /
-            lhs)
+    if (lhs != 0 && rhs > std::numeric_limits<std::uint64_t>::max() / lhs)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Corrupted,
-            std::string(
-                "FAT32 geometry multiplication overflow: ") +
-            operationName);
+        throw Fat32ValidationException(ValidationErrorCategory::Corrupted,
+            std::string("FAT32 geometry multiplication overflow: ") + operationName);
     }
 
     return lhs * rhs;
@@ -323,15 +262,10 @@ std::uint64_t Fat32VolumeValidator::checkedAdd(
     std::uint64_t rhs,
     const char* operationName) const
 {
-    if (rhs >
-        std::numeric_limits<std::uint64_t>::max() -
-        lhs)
+    if (rhs > std::numeric_limits<std::uint64_t>::max() - lhs)
     {
-        throw Fat32ValidationException(
-            ValidationErrorCategory::Corrupted,
-            std::string(
-                "FAT32 geometry addition overflow: ") +
-            operationName);
+        throw Fat32ValidationException(ValidationErrorCategory::Corrupted,
+            std::string("FAT32 geometry addition overflow: ") + operationName);
     }
 
     return lhs + rhs;

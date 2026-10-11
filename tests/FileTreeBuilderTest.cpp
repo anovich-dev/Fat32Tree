@@ -1,13 +1,9 @@
-#include <fat32tree/DirectoryReadResult.h>
-#include <fat32tree/Fat32VolumeLayout.h>
-#include <fat32tree/FileNode.h>
-#include <fat32tree/FileTreeBuilder.h>
-#include <fat32tree/IDirectoryReader.h>
-
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
 #include "Mocks/DirectoryReaderMock.h"
+#include "fat32tree/DirectoryReadResult.h"
+#include "fat32tree/Fat32VolumeLayout.h"
+#include "fat32tree/FileNode.h"
+#include "fat32tree/FileTreeBuilder.h"
+#include "fat32tree/IDirectoryReader.h"
 
 #include <cstdint>
 #include <memory>
@@ -16,13 +12,14 @@
 #include <utility>
 #include <vector>
 
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
 namespace
 {
 
-using ::testing::_;
 using ::testing::Return;
-using StrictDirectoryReaderMock =
-    ::testing::StrictMock<fat32tree::test::DirectoryReaderMock>;
+using StrictDirectoryReaderMock = ::testing::StrictMock<fat32tree::test::DirectoryReaderMock>;
 
 class FileTreeBuilderTest : public ::testing::Test
 {
@@ -33,16 +30,12 @@ protected:
         auto reader = std::make_unique<StrictDirectoryReaderMock>();
         m_directoryReaderMock = reader.get();
         std::unique_ptr<fat32tree::IDirectoryReader> directoryReader = std::move(reader);
-        m_builder = std::make_unique<fat32tree::FileTreeBuilder>(
-            m_layout,
-            std::move(directoryReader));
+        m_builder =
+            std::make_unique<fat32tree::FileTreeBuilder>(m_layout, std::move(directoryReader));
     }
 
-    static fat32tree::DirectoryEntry makeEntry(
-        std::string name,
-        fat32tree::DirectoryEntryType type,
-        std::uint32_t firstCluster = 0,
-        std::uint32_t fileSize = 0)
+    static fat32tree::DirectoryEntry makeEntry(std::string name, fat32tree::DirectoryEntryType type,
+        std::uint32_t firstCluster = 0, std::uint32_t fileSize = 0)
     {
         return {std::move(name), type, firstCluster, fileSize};
     }
@@ -62,6 +55,7 @@ protected:
         return {std::move(entries), std::move(volumeLabel), status};
     }
 
+protected:
     fat32tree::Fat32VolumeLayout m_layout;
     StrictDirectoryReaderMock* m_directoryReaderMock = nullptr;
     std::unique_ptr<fat32tree::FileTreeBuilder> m_builder;
@@ -83,8 +77,7 @@ TEST_F(FileTreeBuilderTest, CreatesRootNodeFromVolumeLabel)
 
 TEST_F(FileTreeBuilderTest, UsesSlashWhenVolumeLabelIsMissing)
 {
-    EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult()));
+    EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2)).WillOnce(Return(rootResult()));
 
     const auto root = m_builder->buildTree();
 
@@ -95,8 +88,7 @@ TEST_F(FileTreeBuilderTest, UsesSlashWhenVolumeLabelIsMissing)
 
 TEST_F(FileTreeBuilderTest, CreatesEmptyTreeForEmptyRootDirectory)
 {
-    EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult()));
+    EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2)).WillOnce(Return(rootResult()));
 
     const auto root = m_builder->buildTree();
 
@@ -106,9 +98,9 @@ TEST_F(FileTreeBuilderTest, CreatesEmptyTreeForEmptyRootDirectory)
 TEST_F(FileTreeBuilderTest, AddsFilesFromRootDirectory)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("README.TXT", fat32tree::DirectoryEntryType::File, 7, 18),
-            makeEntry("DATA.BIN", fat32tree::DirectoryEntryType::File, 8, 1024)})));
+        .WillOnce(
+            Return(rootResult({makeEntry("README.TXT", fat32tree::DirectoryEntryType::File, 7, 18),
+                makeEntry("DATA.BIN", fat32tree::DirectoryEntryType::File, 8, 1024)})));
 
     const auto root = m_builder->buildTree();
 
@@ -126,10 +118,9 @@ TEST_F(FileTreeBuilderTest, AddsFilesFromRootDirectory)
 TEST_F(FileTreeBuilderTest, AddsDirectoriesFromRootDirectory)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20)})));
-    EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({})));
+        .WillOnce(Return(
+            rootResult({makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20)})));
+    EXPECT_CALL(*m_directoryReaderMock, readDirectory(20)).WillOnce(Return(directoryResult({})));
 
     const auto root = m_builder->buildTree();
 
@@ -142,15 +133,12 @@ TEST_F(FileTreeBuilderTest, AddsDirectoriesFromRootDirectory)
 TEST_F(FileTreeBuilderTest, PreservesMixedFilesAndDirectoriesOrder)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("README.TXT", fat32tree::DirectoryEntryType::File),
+        .WillOnce(Return(rootResult({makeEntry("README.TXT", fat32tree::DirectoryEntryType::File),
             makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20),
             makeEntry("DATA.BIN", fat32tree::DirectoryEntryType::File),
             makeEntry("DOCS", fat32tree::DirectoryEntryType::Directory, 30)})));
-    EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({})));
-    EXPECT_CALL(*m_directoryReaderMock, readDirectory(30))
-        .WillOnce(Return(directoryResult({})));
+    EXPECT_CALL(*m_directoryReaderMock, readDirectory(20)).WillOnce(Return(directoryResult({})));
+    EXPECT_CALL(*m_directoryReaderMock, readDirectory(30)).WillOnce(Return(directoryResult({})));
 
     const auto root = m_builder->buildTree();
 
@@ -164,12 +152,12 @@ TEST_F(FileTreeBuilderTest, PreservesMixedFilesAndDirectoriesOrder)
 TEST_F(FileTreeBuilderTest, ReadsChildDirectoryAndAddsItsChildren)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20)})));
+        .WillOnce(Return(
+            rootResult({makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({
-            makeEntry("A.JPG", fat32tree::DirectoryEntryType::File, 41, 100),
-            makeEntry("B.JPG", fat32tree::DirectoryEntryType::File, 42, 200)})));
+        .WillOnce(Return(
+            directoryResult({makeEntry("A.JPG", fat32tree::DirectoryEntryType::File, 41, 100),
+                makeEntry("B.JPG", fat32tree::DirectoryEntryType::File, 42, 200)})));
 
     const auto root = m_builder->buildTree();
 
@@ -182,14 +170,14 @@ TEST_F(FileTreeBuilderTest, ReadsChildDirectoryAndAddsItsChildren)
 TEST_F(FileTreeBuilderTest, BuildsMultipleDirectoryLevels)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20)})));
+        .WillOnce(Return(
+            rootResult({makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({
-            makeEntry("TRIP", fat32tree::DirectoryEntryType::Directory, 40)})));
+        .WillOnce(Return(
+            directoryResult({makeEntry("TRIP", fat32tree::DirectoryEntryType::Directory, 40)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(40))
-        .WillOnce(Return(directoryResult({
-            makeEntry("A.JPG", fat32tree::DirectoryEntryType::File, 80, 9)})));
+        .WillOnce(Return(
+            directoryResult({makeEntry("A.JPG", fat32tree::DirectoryEntryType::File, 80, 9)})));
 
     const auto root = m_builder->buildTree();
 
@@ -203,15 +191,15 @@ TEST_F(FileTreeBuilderTest, BuildsMultipleDirectoryLevels)
 TEST_F(FileTreeBuilderTest, BuildsIndependentSiblingDirectories)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20),
-            makeEntry("DOCS", fat32tree::DirectoryEntryType::Directory, 50)})));
+        .WillOnce(
+            Return(rootResult({makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20),
+                makeEntry("DOCS", fat32tree::DirectoryEntryType::Directory, 50)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(50))
-        .WillOnce(Return(directoryResult({
-            makeEntry("REPORT.PDF", fat32tree::DirectoryEntryType::File, 100, 123)})));
+        .WillOnce(Return(directoryResult(
+            {makeEntry("REPORT.PDF", fat32tree::DirectoryEntryType::File, 100, 123)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({
-            makeEntry("PHOTO.JPG", fat32tree::DirectoryEntryType::File, 101, 456)})));
+        .WillOnce(Return(directoryResult(
+            {makeEntry("PHOTO.JPG", fat32tree::DirectoryEntryType::File, 101, 456)})));
 
     const auto root = m_builder->buildTree();
 
@@ -225,10 +213,9 @@ TEST_F(FileTreeBuilderTest, BuildsIndependentSiblingDirectories)
 TEST_F(FileTreeBuilderTest, KeepsEmptyDirectoryNode)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("EMPTYDIR", fat32tree::DirectoryEntryType::Directory, 20)})));
-    EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({})));
+        .WillOnce(Return(
+            rootResult({makeEntry("EMPTYDIR", fat32tree::DirectoryEntryType::Directory, 20)})));
+    EXPECT_CALL(*m_directoryReaderMock, readDirectory(20)).WillOnce(Return(directoryResult({})));
 
     const auto root = m_builder->buildTree();
 
@@ -241,8 +228,8 @@ TEST_F(FileTreeBuilderTest, KeepsEmptyDirectoryNode)
 TEST_F(FileTreeBuilderTest, DoesNotReadFileClusterAsDirectory)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("FILE.BIN", fat32tree::DirectoryEntryType::File, 100, 900)})));
+        .WillOnce(Return(
+            rootResult({makeEntry("FILE.BIN", fat32tree::DirectoryEntryType::File, 100, 900)})));
 
     const auto root = m_builder->buildTree();
 
@@ -253,8 +240,8 @@ TEST_F(FileTreeBuilderTest, DoesNotReadFileClusterAsDirectory)
 TEST_F(FileTreeBuilderTest, DoesNotTraverseRootClusterAgain)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("BACK_TO_ROOT", fat32tree::DirectoryEntryType::Directory, 2)})));
+        .WillOnce(Return(
+            rootResult({makeEntry("BACK_TO_ROOT", fat32tree::DirectoryEntryType::Directory, 2)})));
 
     const auto root = m_builder->buildTree();
 
@@ -266,12 +253,11 @@ TEST_F(FileTreeBuilderTest, DoesNotTraverseRootClusterAgain)
 TEST_F(FileTreeBuilderTest, DoesNotTraverseAlreadyVisitedDirectoryCluster)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("A", fat32tree::DirectoryEntryType::Directory, 20),
+        .WillOnce(Return(rootResult({makeEntry("A", fat32tree::DirectoryEntryType::Directory, 20),
             makeEntry("B", fat32tree::DirectoryEntryType::Directory, 20)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({
-            makeEntry("CHILD", fat32tree::DirectoryEntryType::File)})));
+        .WillOnce(
+            Return(directoryResult({makeEntry("CHILD", fat32tree::DirectoryEntryType::File)})));
 
     const auto root = m_builder->buildTree();
 
@@ -283,14 +269,14 @@ TEST_F(FileTreeBuilderTest, DoesNotTraverseAlreadyVisitedDirectoryCluster)
 TEST_F(FileTreeBuilderTest, StopsLogicalDirectoryCycle)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("A", fat32tree::DirectoryEntryType::Directory, 20)})));
+        .WillOnce(
+            Return(rootResult({makeEntry("A", fat32tree::DirectoryEntryType::Directory, 20)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({
-            makeEntry("B", fat32tree::DirectoryEntryType::Directory, 40)})));
+        .WillOnce(Return(
+            directoryResult({makeEntry("B", fat32tree::DirectoryEntryType::Directory, 40)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(40))
-        .WillOnce(Return(directoryResult({
-            makeEntry("A_AGAIN", fat32tree::DirectoryEntryType::Directory, 20)})));
+        .WillOnce(Return(
+            directoryResult({makeEntry("A_AGAIN", fat32tree::DirectoryEntryType::Directory, 20)})));
 
     const auto root = m_builder->buildTree();
 
@@ -304,13 +290,13 @@ TEST_F(FileTreeBuilderTest, StopsLogicalDirectoryCycle)
 TEST_F(FileTreeBuilderTest, PreservesNodesFromPartiallyReadDirectory)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20)})));
+        .WillOnce(Return(
+            rootResult({makeEntry("PHOTOS", fat32tree::DirectoryEntryType::Directory, 20)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
-        .WillOnce(Return(directoryResult({
-            makeEntry("FILE1", fat32tree::DirectoryEntryType::File),
-            makeEntry("FILE2", fat32tree::DirectoryEntryType::File)},
-            fat32tree::ClusterChainStatus::BadCluster)));
+        .WillOnce(
+            Return(directoryResult({makeEntry("FILE1", fat32tree::DirectoryEntryType::File),
+                                       makeEntry("FILE2", fat32tree::DirectoryEntryType::File)},
+                fat32tree::ClusterChainStatus::BadCluster)));
 
     const auto root = m_builder->buildTree();
 
@@ -323,12 +309,12 @@ TEST_F(FileTreeBuilderTest, PreservesNodesFromPartiallyReadDirectory)
 TEST_F(FileTreeBuilderTest, ContinuesBuildingOtherDirectoriesWhenOneIsEmptyOrBroken)
 {
     EXPECT_CALL(*m_directoryReaderMock, readRootDirectory(2))
-        .WillOnce(Return(rootResult({
-            makeEntry("BROKEN", fat32tree::DirectoryEntryType::Directory, 20),
-            makeEntry("GOOD", fat32tree::DirectoryEntryType::Directory, 30)})));
+        .WillOnce(
+            Return(rootResult({makeEntry("BROKEN", fat32tree::DirectoryEntryType::Directory, 20),
+                makeEntry("GOOD", fat32tree::DirectoryEntryType::Directory, 30)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(30))
-        .WillOnce(Return(directoryResult({
-            makeEntry("OK.TXT", fat32tree::DirectoryEntryType::File)})));
+        .WillOnce(
+            Return(directoryResult({makeEntry("OK.TXT", fat32tree::DirectoryEntryType::File)})));
     EXPECT_CALL(*m_directoryReaderMock, readDirectory(20))
         .WillOnce(Return(directoryResult({}, fat32tree::ClusterChainStatus::ReadError)));
 

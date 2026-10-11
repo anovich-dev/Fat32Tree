@@ -33,23 +33,23 @@ constexpr const char* readStatusToString(ReadStatus status) noexcept
 {
     switch (status)
     {
-        case ReadStatus::Success:
-            return "Success";
+    case ReadStatus::Success:
+        return "Success";
 
-        case ReadStatus::OutOfBounds:
-            return "OutOfBounds";
+    case ReadStatus::OutOfBounds:
+        return "OutOfBounds";
 
-        case ReadStatus::InvalidReadSize:
-            return "InvalidReadSize";
+    case ReadStatus::InvalidReadSize:
+        return "InvalidReadSize";
 
-        case ReadStatus::SeekFailed:
-            return "SeekFailed";
+    case ReadStatus::SeekFailed:
+        return "SeekFailed";
 
-        case ReadStatus::ShortRead:
-            return "ShortRead";
+    case ReadStatus::ShortRead:
+        return "ShortRead";
 
-        case ReadStatus::ReadFailed:
-            return "ReadFailed";
+    case ReadStatus::ReadFailed:
+        return "ReadFailed";
     }
 
     return "Unknown";

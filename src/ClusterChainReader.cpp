@@ -2,22 +2,21 @@
 
 #include "fat32tree/FatEntry.h"
 #include "fat32tree/FatTableReader.h"
+#include "fat32tree/Fat32VolumeLayout.h"
 #include "fat32tree/Logger.h"
 
-#include <string>
 #include <unordered_set>
 
 namespace fat32tree
 {
 
-    ClusterChainReader::ClusterChainReader(FatTableReader &fatTableReader, const Fat32VolumeLayout &layout)
-        : m_fatTableReader(fatTableReader),
-          m_layout(layout)
-    {
-    }
+ClusterChainReader::ClusterChainReader(FatTableReader &fatTableReader, const Fat32VolumeLayout &layout)
+    : m_fatTableReader(fatTableReader),
+      m_layout(layout)
+{
+}
 
- ClusterChainResult ClusterChainReader::getClusterChain(
-    std::uint32_t firstCluster) const
+ ClusterChainResult ClusterChainReader::getClusterChain(std::uint32_t firstCluster) const
 {
     ClusterChainResult result;
     std::unordered_set<std::uint32_t> visited;
@@ -35,16 +34,20 @@ namespace fat32tree
         if (!isValidDataCluster(currentCluster))
         {
             result.status = ClusterChainStatus::InvalidCluster;
+
             warnIncompleteChain("Invalid cluster encountered in chain: " +
                 std::to_string(currentCluster));
+
             return result;
         }
 
         if (!visited.insert(currentCluster).second)
         {
             result.status = ClusterChainStatus::CycleDetected;
+
             warnIncompleteChain("Cluster chain cycle detected at cluster " +
                 std::to_string(currentCluster));
+
             return result;
         }
 
@@ -59,8 +62,10 @@ namespace fat32tree
         catch (const FatTableReadException&)
         {
             result.status = ClusterChainStatus::ReadError;
+
             warnIncompleteChain("Failed to read FAT entry for cluster " +
                 std::to_string(currentCluster));
+
             return result;
         }
 
@@ -76,34 +81,40 @@ namespace fat32tree
 
             case FatEntryType::Free:
                 result.status = ClusterChainStatus::FreeCluster;
+
                 warnIncompleteChain("Free cluster encountered while traversing chain at cluster " +
                     std::to_string(currentCluster));
+
                 break;
 
             case FatEntryType::Bad:
                 result.status = ClusterChainStatus::BadCluster;
+
                 warnIncompleteChain("Bad cluster encountered while traversing chain at cluster " +
                     std::to_string(currentCluster));
+
                 break;
 
             case FatEntryType::Reserved:
                 result.status = ClusterChainStatus::ReservedValue;
+
                 warnIncompleteChain("Reserved FAT value encountered after cluster " +
                     std::to_string(currentCluster));
+
                 break;
         }
 
         return result;
     }
 }
-    bool ClusterChainReader::isValidDataCluster(std::uint32_t clusterNumber) const
+bool ClusterChainReader::isValidDataCluster(std::uint32_t clusterNumber) const
+{
+    if (clusterNumber < 2)
     {
-        if (clusterNumber < 2)
-        {
-            return false;
-        }
-
-        return static_cast<std::uint64_t>(clusterNumber - 2) < m_layout.clusterCount;
+        return false;
     }
+
+    return static_cast<std::uint64_t>(clusterNumber - 2) < m_layout.clusterCount;
+}
 
 }

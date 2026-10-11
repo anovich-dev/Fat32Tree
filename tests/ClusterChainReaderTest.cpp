@@ -1,8 +1,7 @@
-#include <fat32tree/ClusterChainReader.h>
-#include <fat32tree/Fat32VolumeLayout.h>
-#include <fat32tree/FatTableReader.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/BinaryReader.h"
+#include "fat32tree/ClusterChainReader.h"
+#include "fat32tree/Fat32VolumeLayout.h"
+#include "fat32tree/FatTableReader.h"
 
 #include <atomic>
 #include <chrono>
@@ -10,8 +9,11 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <system_error>
 #include <vector>
+
+#include <gtest/gtest.h>
 
 namespace
 {
@@ -26,16 +28,13 @@ protected:
     void SetUp() override
     {
         static std::atomic<std::uint64_t> nextId{0};
-        const auto timestamp = std::chrono::high_resolution_clock::now()
-                                   .time_since_epoch()
-                                   .count();
+        const auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         const auto temporaryRoot = std::filesystem::temp_directory_path();
 
         for (int attempt = 0; attempt < 100; ++attempt)
         {
-            const auto directoryName =
-                "Fat32Tree-ClusterChainReader-" + std::to_string(timestamp) +
-                "-" + std::to_string(nextId.fetch_add(1));
+            const auto directoryName = "Fat32Tree-ClusterChainReader-" + std::to_string(timestamp) +
+                                       "-" + std::to_string(nextId.fetch_add(1));
             const auto candidate = temporaryRoot / directoryName;
             std::error_code error;
 
@@ -62,17 +61,14 @@ protected:
     {
         std::ofstream output(m_imagePath, std::ios::binary);
         ASSERT_TRUE(output.is_open());
-        output.write(
-            reinterpret_cast<const char*>(bytes.data()),
+        output.write(reinterpret_cast<const char*>(bytes.data()),
             static_cast<std::streamsize>(bytes.size()));
         output.close();
         ASSERT_TRUE(output.good());
     }
 
     static void writeU32LE(
-        std::vector<std::uint8_t>& bytes,
-        std::size_t offset,
-        std::uint32_t value)
+        std::vector<std::uint8_t>& bytes, std::size_t offset, std::uint32_t value)
     {
         ASSERT_LE(offset + 4, bytes.size());
         bytes[offset] = static_cast<std::uint8_t>(value & 0xFFU);
@@ -102,6 +98,7 @@ protected:
         return layout;
     }
 
+protected:
     std::filesystem::path m_temporaryDirectory;
     std::filesystem::path m_imagePath;
 };
@@ -283,8 +280,7 @@ TEST_F(ClusterChainReaderTest, DetectsNonTrivialCycleAndPreservesPrefix)
 
 TEST_F(ClusterChainReaderTest, FatReadErrorPreservesRecoveredPrefix)
 {
-    std::vector<std::uint8_t> bytes(
-        static_cast<std::size_t>(kSelectedFatOffset + 20 * 4 + 4), 0);
+    std::vector<std::uint8_t> bytes(static_cast<std::size_t>(kSelectedFatOffset + 20 * 4 + 4), 0);
     writeU32LE(bytes, fatEntryOffset(20), 21);
     writeImage(bytes);
 

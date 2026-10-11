@@ -5,7 +5,8 @@ namespace fat32tree
 
 static constexpr std::uint8_t kSpaceCharacter = 0x20;
 
-bool DirectoryEntryValidator::isValidShortName(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const
+bool DirectoryEntryValidator::isValidShortName(
+    std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const
 {
     if (isDotEntry(rawName) || isDotDotEntry(rawName))
     {
@@ -54,7 +55,8 @@ bool DirectoryEntryValidator::isValidShortName(std::span<const std::uint8_t, fat
     return true;
 }
 
-bool DirectoryEntryValidator::isDotEntry(std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const
+bool DirectoryEntryValidator::isDotEntry(
+    std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const
 {
     if (rawName[0] != '.')
     {
@@ -72,7 +74,8 @@ bool DirectoryEntryValidator::isDotEntry(std::span<const std::uint8_t, fat32::kS
     return true;
 }
 
-bool DirectoryEntryValidator::isDotDotEntry(std::span< const std::uint8_t, fat32::kShortNameLength> rawName) const
+bool DirectoryEntryValidator::isDotDotEntry(
+    std::span<const std::uint8_t, fat32::kShortNameLength> rawName) const
 {
     if (rawName[0] != '.' || rawName[1] != '.')
     {

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "FileNode.h"
-
-#include <ostream>
+#include <iosfwd>
 #include <stack>
 #include <string>
 
 namespace fat32tree
 {
+
+struct FileNode;
 
 class TreePrinter
 {
@@ -22,9 +22,7 @@ private:
         bool isLast;
     };
 
-     void pushChildren(
-        const FileNode& parent,
-        const std::string& prefix,
+    void pushChildren(const FileNode& parent, const std::string& prefix,
         std::stack<PrintWorkItem>& workItems) const;
 };
 

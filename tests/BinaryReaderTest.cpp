@@ -1,6 +1,4 @@
-#include <fat32tree/BinaryReader.h>
-
-#include <gtest/gtest.h>
+#include "fat32tree/BinaryReader.h"
 
 #include <array>
 #include <atomic>
@@ -14,6 +12,8 @@
 #include <system_error>
 #include <vector>
 
+#include <gtest/gtest.h>
+
 namespace
 {
 
@@ -26,16 +26,14 @@ protected:
     void SetUp() override
     {
         static std::atomic<std::uint64_t> nextId{0};
-        const auto timestamp = std::chrono::high_resolution_clock::now()
-                                   .time_since_epoch()
-                                   .count();
+        const auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         const auto temporaryRoot = std::filesystem::temp_directory_path();
 
         for (int attempt = 0; attempt < 100; ++attempt)
         {
-            const std::string directoryName =
-                "Fat32Tree-BinaryReader-" + std::to_string(timestamp) + "-" +
-                std::to_string(nextId.fetch_add(1));
+            const std::string directoryName = "Fat32Tree-BinaryReader-" +
+                                              std::to_string(timestamp) + "-" +
+                                              std::to_string(nextId.fetch_add(1));
             const auto candidate = temporaryRoot / directoryName;
             std::error_code error;
 
@@ -53,8 +51,7 @@ protected:
 
         std::ofstream output(m_filePath, std::ios::binary);
         ASSERT_TRUE(output.is_open());
-        output.write(
-            reinterpret_cast<const char*>(kBytes.data()),
+        output.write(reinterpret_cast<const char*>(kBytes.data()),
             static_cast<std::streamsize>(kBytes.size()));
         output.close();
         ASSERT_TRUE(output.good());
@@ -66,6 +63,7 @@ protected:
         std::filesystem::remove_all(m_temporaryDirectory, error);
     }
 
+protected:
     std::filesystem::path m_temporaryDirectory;
     std::filesystem::path m_filePath;
 };
@@ -226,8 +224,7 @@ TEST_F(BinaryReaderTest, ReadU8AtMaximumOffsetReturnsOutOfBounds)
 {
     fat32tree::BinaryReader reader(m_filePath);
 
-    EXPECT_EQ(
-        reader.readU8(std::numeric_limits<std::uint64_t>::max()).status,
+    EXPECT_EQ(reader.readU8(std::numeric_limits<std::uint64_t>::max()).status,
         fat32tree::ReadStatus::OutOfBounds);
 }
 
@@ -299,9 +296,7 @@ TEST_F(BinaryReaderTest, MissingFileThrowsBinaryReaderException)
 {
     const auto missingPath = m_temporaryDirectory / "does-not-exist.img";
 
-    EXPECT_THROW(
-        fat32tree::BinaryReader reader(missingPath),
-        fat32tree::BinaryReaderException);
+    EXPECT_THROW(fat32tree::BinaryReader reader(missingPath), fat32tree::BinaryReaderException);
 }
 
 TEST_F(BinaryReaderTest, ReadsUseIndependentAbsoluteOffsets)

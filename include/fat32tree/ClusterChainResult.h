@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vector>
 
 namespace fat32tree
@@ -13,7 +14,7 @@ enum class ClusterChainStatus
     ReservedValue,  // Chain encountered a reserved FAT32 entry value.
     InvalidCluster, // Cluster number is outside the valid range of this volume.
     CycleDetected,  // A cluster was encountered more than once in the same chain.
-    ReadError      // FAT entry could not be read from the image.
+    ReadError       // FAT entry could not be read from the image.
 };
 
 struct ClusterChainResult

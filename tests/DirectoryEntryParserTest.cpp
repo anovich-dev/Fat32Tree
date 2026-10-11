@@ -1,14 +1,9 @@
-#include <fat32tree/BinaryReader.h>
-#include <fat32tree/DirectoryEntryParser.h>
-#include <fat32tree/Fat32Constants.h>
-#include <fat32tree/IDirectoryEntryValidator.h>
-
-#include <gmock/gmock.h>
-#include <gtest/gtest.h>
-
 #include "Mocks/DirectoryEntryValidatorMock.h"
+#include "fat32tree/BinaryReader.h"
+#include "fat32tree/DirectoryEntryParser.h"
+#include "fat32tree/Fat32Constants.h"
+#include "fat32tree/IDirectoryEntryValidator.h"
 
-#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
@@ -21,6 +16,9 @@
 #include <system_error>
 #include <utility>
 #include <vector>
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 namespace
 {
@@ -37,16 +35,14 @@ protected:
     void SetUp() override
     {
         static std::atomic<std::uint64_t> nextId{0};
-        const auto timestamp = std::chrono::high_resolution_clock::now()
-                                   .time_since_epoch()
-                                   .count();
+        const auto timestamp = std::chrono::high_resolution_clock::now().time_since_epoch().count();
         const auto temporaryRoot = std::filesystem::temp_directory_path();
 
         for (int attempt = 0; attempt < 100; ++attempt)
         {
-            const auto directoryName =
-                "Fat32Tree-DirectoryEntryParser-" + std::to_string(timestamp) +
-                "-" + std::to_string(nextId.fetch_add(1));
+            const auto directoryName = "Fat32Tree-DirectoryEntryParser-" +
+                                       std::to_string(timestamp) + "-" +
+                                       std::to_string(nextId.fetch_add(1));
             const auto candidate = temporaryRoot / directoryName;
             std::error_code error;
 
@@ -73,8 +69,7 @@ protected:
     {
         std::ofstream output(m_imagePath, std::ios::binary);
         ASSERT_TRUE(output.is_open());
-        output.write(
-            reinterpret_cast<const char*>(bytes.data()),
+        output.write(reinterpret_cast<const char*>(bytes.data()),
             static_cast<std::streamsize>(bytes.size()));
         output.close();
         ASSERT_TRUE(output.good());
@@ -90,8 +85,7 @@ protected:
         return bytes;
     }
 
-    static std::array<std::uint8_t, fat32tree::fat32::kShortNameLength>
-    paddedName(const char* name)
+    static std::array<std::uint8_t, fat32tree::fat32::kShortNameLength> paddedName(const char* name)
     {
         std::array<std::uint8_t, fat32tree::fat32::kShortNameLength> result{};
         result.fill(static_cast<std::uint8_t>(' '));
@@ -100,29 +94,24 @@ protected:
         return result;
     }
 
-    static std::array<std::uint8_t, fat32tree::fat32::kShortNameLength>
-    shortName(const char* base, const char* extension)
+    static std::array<std::uint8_t, fat32tree::fat32::kShortNameLength> shortName(
+        const char* base, const char* extension)
     {
         std::array<std::uint8_t, fat32tree::fat32::kShortNameLength> result{};
         result.fill(static_cast<std::uint8_t>(' '));
 
         const std::string baseString(base);
         const std::string extensionString(extension);
-        std::copy_n(
-            baseString.begin(),
-            std::min(baseString.size(), fat32tree::fat32::kShortNameBaseLength),
-            result.begin());
-        std::copy_n(
-            extensionString.begin(),
+        std::copy_n(baseString.begin(),
+            std::min(baseString.size(), fat32tree::fat32::kShortNameBaseLength), result.begin());
+        std::copy_n(extensionString.begin(),
             std::min(extensionString.size(), fat32tree::fat32::kShortNameExtensionLength),
             result.begin() + fat32tree::fat32::kShortNameBaseLength);
         return result;
     }
 
     static void writeU16LE(
-        std::vector<std::uint8_t>& bytes,
-        std::size_t offset,
-        std::uint16_t value)
+        std::vector<std::uint8_t>& bytes, std::size_t offset, std::uint16_t value)
     {
         ASSERT_LT(offset + 1, bytes.size());
         bytes[offset] = static_cast<std::uint8_t>(value & 0xFFU);
@@ -130,9 +119,7 @@ protected:
     }
 
     static void writeU32LE(
-        std::vector<std::uint8_t>& bytes,
-        std::size_t offset,
-        std::uint32_t value)
+        std::vector<std::uint8_t>& bytes, std::size_t offset, std::uint32_t value)
     {
         ASSERT_LE(offset + 4, bytes.size());
         bytes[offset] = static_cast<std::uint8_t>(value & 0xFFU);
@@ -141,6 +128,7 @@ protected:
         bytes[offset + 3] = static_cast<std::uint8_t>((value >> 24) & 0xFFU);
     }
 
+protected:
     std::filesystem::path m_temporaryDirectory;
     std::filesystem::path m_imagePath;
 };
@@ -221,9 +209,7 @@ TEST_F(DirectoryEntryParserTest, ReturnsInvalidWhenAttributesCannotBeRead)
 
 TEST_F(DirectoryEntryParserTest, LongNameEntryPrecedesVolumeLabelAndSkipsValidator)
 {
-    auto bytes = makeEntry(
-        paddedName("LONGNAME"),
-        fat32tree::fat32::kAttributeLongName);
+    auto bytes = makeEntry(paddedName("LONGNAME"), fat32tree::fat32::kAttributeLongName);
     writeImage(bytes);
     fat32tree::BinaryReader reader(m_imagePath);
     auto validator = std::make_unique<fat32tree::test::DirectoryEntryValidatorMock>();
@@ -237,9 +223,7 @@ TEST_F(DirectoryEntryParserTest, LongNameEntryPrecedesVolumeLabelAndSkipsValidat
 
 TEST_F(DirectoryEntryParserTest, VolumeLabelUsesDedicatedParsingAndSkipsValidator)
 {
-    auto bytes = makeEntry(
-        paddedName("MY_USB"),
-        fat32tree::fat32::kAttributeVolumeId);
+    auto bytes = makeEntry(paddedName("MY_USB"), fat32tree::fat32::kAttributeVolumeId);
     writeImage(bytes);
     fat32tree::BinaryReader reader(m_imagePath);
     auto validator = std::make_unique<fat32tree::test::DirectoryEntryValidatorMock>();
@@ -257,9 +241,7 @@ TEST_F(DirectoryEntryParserTest, VolumeLabelUsesDedicatedParsingAndSkipsValidato
 
 TEST_F(DirectoryEntryParserTest, ParsesVolumeLabelWithoutShortNameDotFormatting)
 {
-    auto bytes = makeEntry(
-        paddedName("MYVOLUMEABC"),
-        fat32tree::fat32::kAttributeVolumeId);
+    auto bytes = makeEntry(paddedName("MYVOLUMEABC"), fat32tree::fat32::kAttributeVolumeId);
     writeImage(bytes);
     fat32tree::BinaryReader reader(m_imagePath);
     auto validator = std::make_unique<fat32tree::test::DirectoryEntryValidatorMock>();
@@ -290,14 +272,8 @@ TEST_F(DirectoryEntryParserTest, ValidatorRejectingReadableShortNameReturnsInval
 TEST_F(DirectoryEntryParserTest, ParsesValidShortNameAsFileAndCombinesClusterAndSize)
 {
     auto bytes = makeEntry(shortName("README", "TXT"), fat32tree::fat32::kAttributeArchive);
-    writeU16LE(
-        bytes,
-        fat32tree::fat32::kDirectoryFirstClusterHighOffset,
-        0x1234);
-    writeU16LE(
-        bytes,
-        fat32tree::fat32::kDirectoryFirstClusterLowOffset,
-        0x5678);
+    writeU16LE(bytes, fat32tree::fat32::kDirectoryFirstClusterHighOffset, 0x1234);
+    writeU16LE(bytes, fat32tree::fat32::kDirectoryFirstClusterLowOffset, 0x5678);
     writeU32LE(bytes, fat32tree::fat32::kDirectoryFileSizeOffset, 0x89ABCDEF);
     writeImage(bytes);
     fat32tree::BinaryReader reader(m_imagePath);
@@ -396,8 +372,7 @@ TEST_F(DirectoryEntryParserTest, ReturnsInvalidWhenFirstClusterHighWordCannotBeR
 TEST_F(DirectoryEntryParserTest, ReturnsInvalidWhenFirstClusterLowWordCannotBeRead)
 {
     auto bytes = makeEntry(paddedName("FILE"));
-    bytes.resize(
-        fat32tree::fat32::kDirectoryFirstClusterLowOffset + 1);
+    bytes.resize(fat32tree::fat32::kDirectoryFirstClusterLowOffset + 1);
     writeImage(bytes);
     fat32tree::BinaryReader reader(m_imagePath);
     auto validator = std::make_unique<fat32tree::test::DirectoryEntryValidatorMock>();
